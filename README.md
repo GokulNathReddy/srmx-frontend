@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 SRMX – Smart Student Dashboard
 
-## Getting Started
+A modern and powerful student dashboard designed for SRM students to manage academics easily.
 
-First, run the development server:
+---
+
+## ✨ Features
+
+* 📊 **Dashboard** – Overview of academic data
+* 📅 **Timetable** – View daily schedule
+* 📈 **Marks** – Track subject performance
+* 🎯 **GPA Calculator** – Calculate GPA instantly
+* 🤖 **AI Assistant** – Smart help for students
+* 📱 **PWA Support** – Works like a mobile app
+
+---
+
+## 🛠 Tech Stack
+
+* ⚡ Next.js 16 (App Router)
+* 🧠 TypeScript
+* 🎨 Tailwind CSS
+* ☁️ Vercel (Deployment)
+
+---
+
+## 🌐 Live Demo
+
+👉 https://srmx-beta.vercel.app
+
+---
+
+## 📦 Installation & Setup
 
 ```bash
+git clone https://github.com/nithish687894/srmx-frontend.git
+cd srmx-frontend
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📁 Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+app/            → Pages & routes
+components/     → UI components
+lib/            → API & utilities
+public/         → Static files
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 🔐 Environment Variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Create a `.env.local` file if needed:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+NEXT_PUBLIC_API_URL=your_api_url
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🚀 Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is deployed using **Vercel**.
+Every push can trigger automatic deployment.
+
+---
+
+## 🎯 Future Improvements
+
+* 🔐 Authentication system (Login/Register)
+* 📡 Real-time data integration
+* 🛡 Security testing (XSS, API protection)
+* 📊 Advanced analytics
+
+---
+
+## 👨‍💻 Author
+
+**Nithishkumar S**
+📧 [nithish687894@gmail.com](mailto:nithish687894@gmail.com)
+
+---
+
+## ⭐ Support
+
+If you like this project, give it a ⭐ on GitHub!
