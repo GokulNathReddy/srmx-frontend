@@ -3,14 +3,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { dataAPI } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 
 const GRADE_TABLE = [
-  { min: 91, grade: "O",  points: 10 },
-  { min: 81, grade: "A+", points: 9 },
-  { min: 71, grade: "A",  points: 8 },
-  { min: 61, grade: "B+", points: 7 },
-  { min: 51, grade: "B",  points: 6 },
-  { min: 0,  grade: "C",  points: 5 },
+  { min: 91, grade: "O",  points: 10, color: "#f5a623" },
+  { min: 81, grade: "A+", points: 9,  color: "#f7c068" },
+  { min: 71, grade: "A",  points: 8,  color: "#63cda0" },
+  { min: 61, grade: "B+", points: 7,  color: "#6399ff" },
+  { min: 51, grade: "B",  points: 6,  color: "#a78bfa" },
+  { min: 0,  grade: "C",  points: 5,  color: "#f87171" },
 ];
 
 function getGrade(pct: number) {
@@ -24,24 +25,21 @@ export default function GPAPage() {
   const [internals, setInternals] = useState<Record<string, number>>({});
   const [externals, setExternals] = useState<Record<string, number>>({});
   const router = useRouter();
+  const { ready } = useAuth();
 
   useEffect(() => {
-    if (!localStorage.getItem("srmx_token")) return router.push("/");
+    if (!ready) return;
     Promise.all([dataAPI.getAttendance(), dataAPI.getMarks()])
       .then(([a, m]) => {
         setAttendance(a.data || []);
         setMarks(m.data || []);
-        // Pre-fill internals from marks data
-        const initInternals: Record<string, number> = {};
-        ;(m.data || []).forEach((mk: any) => {
-          const scored = mk.tests?.reduce((s: number, t: any) =>
-            s + (t.score === "Abs" ? 0 : parseFloat(t.score) || 0), 0) || 0;
-          const maxTotal = mk.tests?.reduce((s: number, t: any) => {
-            const [, mx] = t.test.split("/"); return s + (parseFloat(mx) || 0);
-          }, 0) || 0;
-          if (maxTotal > 0) initInternals[mk.courseCode] = Math.round((scored / maxTotal) * 50);
+        const init: Record<string, number> = {};
+        (m.data || []).forEach((mk: any) => {
+          const scored = mk.tests?.reduce((s: number, t: any) => s + (t.score === "Abs" ? 0 : parseFloat(t.score) || 0), 0) || 0;
+          const maxTotal = mk.tests?.reduce((s: number, t: any) => { const [, mx] = t.test.split("/"); return s + (parseFloat(mx) || 0); }, 0) || 0;
+          if (maxTotal > 0) init[mk.courseCode] = Math.round((scored / maxTotal) * 50);
         });
-        setInternals(initInternals);
+        setInternals(init);
         setLoading(false);
       })
       .catch(() => router.push("/"));
@@ -58,108 +56,158 @@ export default function GPAPage() {
     return { code, title: c["Course Title"], intMark, extMark, total, grade };
   });
 
-  const gpa = rows.length > 0
-    ? rows.reduce((s, r) => s + r.grade.points, 0) / rows.length
-    : 0;
-
-  const gpaColor = gpa >= 9 ? "#22c55e" : gpa >= 7 ? "#60a5fa" : gpa >= 6 ? "#f59e0b" : "#ef4444";
+  const gpa = rows.length > 0 ? rows.reduce((s, r) => s + r.grade.points, 0) / rows.length : 0;
+  const gpaColor = gpa >= 9 ? "#f5a623" : gpa >= 7 ? "#63cda0" : gpa >= 6 ? "#6399ff" : "#f87171";
+  const gpaStatus = gpa >= 9 ? "Outstanding" : gpa >= 8 ? "Excellent" : gpa >= 7 ? "Good" : gpa >= 6 ? "Average" : "Needs improvement";
 
   return (
-    <div style={{ minHeight: "100vh", background: "#07070e", color: "#f4f4f5", fontFamily: "'Inter', system-ui, sans-serif" }}>
-      <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
-        <div style={{ position: "absolute", top: "10%", left: "20%", width: "600px", height: "600px", borderRadius: "50%", background: "radial-gradient(circle,rgba(34,197,94,0.05) 0%,transparent 70%)" }} />
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.011) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.011) 1px,transparent 1px)", backgroundSize: "56px 56px" }} />
-      </div>
-      <Sidebar />
-      <main style={{ paddingLeft: "272px", position: "relative", zIndex: 1 }}>
-        <header style={{ position: "sticky", top: 0, height: "60px", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px", background: "rgba(7,7,14,0.9)", backdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.055)", zIndex: 10 }}>
-          <h1 style={{ fontWeight: 700, fontSize: "15px", letterSpacing: "-0.01em" }}>GPA Calculator</h1>
-          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>Internal (0–50) + External (0–50)</div>
-        </header>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        <div style={{ padding: "28px 32px 80px" }}>
-          {loading ? (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "200px", color: "rgba(255,255,255,0.3)" }}>Loading...</div>
-          ) : (
-            <>
-              {/* GPA Summary Card */}
-              <div style={{ borderRadius: "20px", padding: "28px 32px", background: "rgba(13,13,20,0.9)", border: "1px solid rgba(255,255,255,0.07)", marginBottom: "24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div>
-                  <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "8px" }}>Estimated GPA</div>
-                  <div style={{ fontSize: "64px", fontWeight: 800, color: gpaColor, lineHeight: 1, letterSpacing: "-0.03em" }}>
-                    {gpa.toFixed(2)}
+        .gpa-root { min-height: 100vh; background: #07070e; font-family: 'DM Sans', sans-serif; }
+        .gpa-orb-1 { position: fixed; top: -120px; left: 100px; width: 520px; height: 520px; border-radius: 50%; background: radial-gradient(circle, rgba(245,166,35,0.06) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+        .gpa-orb-2 { position: fixed; bottom: -150px; right: 0; width: 420px; height: 420px; border-radius: 50%; background: radial-gradient(circle, rgba(99,153,255,0.04) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+
+        .gpa-main { margin-left: 272px; position: relative; z-index: 1; }
+
+        .gpa-topbar { position: sticky; top: 0; height: 68px; display: flex; align-items: center; justify-content: space-between; padding: 0 36px; background: rgba(7,7,14,0.88); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.05); z-index: 50; }
+        .gpa-topbar-left { display: flex; align-items: center; gap: 12px; }
+        .gpa-topbar-icon { width: 34px; height: 34px; border-radius: 10px; background: rgba(245,166,35,0.12); display: flex; align-items: center; justify-content: center; }
+        .gpa-topbar-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+        .gpa-topbar-hint { font-size: 12px; color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 999px; padding: 5px 14px; }
+
+        .gpa-content { padding: 32px 36px 80px; }
+
+        .gpa-hero { border-radius: 20px; padding: 28px 32px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; position: relative; overflow: hidden; }
+        .gpa-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #f5a623, #f7c068); border-radius: 20px 20px 0 0; }
+        .gpa-hero:hover { border-color: rgba(245,166,35,0.2); }
+
+        .gpa-num { font-family: 'Playfair Display', serif; font-size: 72px; font-weight: 700; line-height: 1; letter-spacing: -2px; }
+        .gpa-label { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; }
+        .gpa-status { font-size: 14px; color: rgba(255,255,255,0.35); margin-top: 10px; }
+
+        .gpa-hint { font-size: 11px; color: rgba(255,255,255,0.25); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 14px; }
+
+        .gpa-rows { display: flex; flex-direction: column; gap: 10px; }
+        .gpa-row { border-radius: 14px; padding: 14px 18px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 14px; transition: border-color 0.2s; }
+        .gpa-row:hover { border-color: rgba(245,166,35,0.2); }
+
+        .grade-badge { width: 42px; height: 42px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
+        .grade-letter { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; }
+        .grade-pts { font-size: 9px; color: rgba(255,255,255,0.3); margin-top: 1px; }
+
+        .slider-col { text-align: center; width: 96px; flex-shrink: 0; }
+        .slider-lbl { font-size: 9px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .slider-val { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; margin-top: 4px; }
+
+        input[type=range] { -webkit-appearance: none; appearance: none; height: 4px; border-radius: 99px; background: rgba(255,255,255,0.08); outline: none; cursor: pointer; width: 80px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; cursor: pointer; }
+        .int-range::-webkit-slider-thumb { background: #f5a623; box-shadow: 0 0 8px rgba(245,166,35,0.5); }
+        .ext-range::-webkit-slider-thumb { background: #63cda0; box-shadow: 0 0 8px rgba(99,205,160,0.5); }
+
+        .gpa-loading { display: flex; align-items: center; justify-content: center; height: 200px; gap: 12px; color: rgba(255,255,255,0.25); }
+        .gpa-spinner { width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(245,166,35,0.15); border-top-color: #f5a623; animation: spin 0.8s linear infinite; }
+
+        @keyframes cardIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 900px) {
+          .gpa-main { margin-left: 0; }
+          .gpa-content { padding: 24px 20px 60px; }
+          .gpa-topbar { padding: 0 20px; }
+          .gpa-hero { flex-direction: column; gap: 20px; align-items: flex-start; }
+        }
+      `}</style>
+
+      <div className="gpa-root">
+        <div className="gpa-orb-1" />
+        <div className="gpa-orb-2" />
+        <Sidebar />
+
+        <main className="gpa-main">
+          <div className="gpa-topbar">
+            <div className="gpa-topbar-left">
+              <div className="gpa-topbar-icon">
+                <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+                  <path d="M9 2l1.8 3.6 4 .6-2.9 2.8.7 4L9 11l-3.6 1.9.7-4L3.2 6.2l4-.6L9 2z" stroke="#f5a623" strokeWidth="1.5" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <span className="gpa-topbar-title">GPA Calculator</span>
+            </div>
+            <span className="gpa-topbar-hint">Internal (0–50) + External (0–50)</span>
+          </div>
+
+          <div className="gpa-content">
+            {loading ? (
+              <div className="gpa-loading">
+                <div className="gpa-spinner" />
+                <span>Loading subjects…</span>
+              </div>
+            ) : (
+              <>
+                {/* GPA Hero */}
+                <div className="gpa-hero">
+                  <div>
+                    <div className="gpa-label">Estimated GPA</div>
+                    <div className="gpa-num" style={{ color: gpaColor }}>{gpa.toFixed(2)}</div>
+                    <div className="gpa-status">{gpaStatus}</div>
                   </div>
-                  <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", marginTop: "6px" }}>
-                    {gpa >= 9 ? "Outstanding 🏆" : gpa >= 8 ? "Excellent 🌟" : gpa >= 7 ? "Good 👍" : gpa >= 6 ? "Average" : "Needs improvement"}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-end" }}>
+                    {GRADE_TABLE.map(g => (
+                      <div key={g.grade} style={{ display: "flex", alignItems: "center", gap: "10px", opacity: rows.some(r => r.grade.grade === g.grade) ? 1 : 0.2 }}>
+                        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", width: "50px", textAlign: "right" }}>
+                          {g.min === 0 ? "< 51" : `≥ ${g.min}`}%
+                        </span>
+                        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: "14px", fontWeight: 700, color: g.color, width: "26px" }}>{g.grade}</span>
+                        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)" }}>{g.points}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px", alignItems: "flex-end" }}>
-                  {GRADE_TABLE.map(g => (
-                    <div key={g.grade} style={{ display: "flex", alignItems: "center", gap: "8px", opacity: rows.some(r => r.grade.grade === g.grade) ? 1 : 0.25 }}>
-                      <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", width: "50px", textAlign: "right" }}>{g.min === 0 ? "< 51" : `≥ ${g.min}`}%</span>
-                      <span style={{ fontSize: "13px", fontWeight: 700, color: "#f4f4f5", width: "24px" }}>{g.grade}</span>
-                      <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>{g.points}</span>
+
+                <div className="gpa-hint">Drag sliders to simulate your GPA</div>
+
+                <div className="gpa-rows">
+                  {rows.map((r, i) => (
+                    <div key={r.code} className="gpa-row" style={{ animation: `cardIn 0.35s ${i * 0.04}s both` }}>
+                      <div className="grade-badge" style={{ background: `${r.grade.color}15`, border: `1px solid ${r.grade.color}30` }}>
+                        <span className="grade-letter" style={{ color: r.grade.color }}>{r.grade.grade}</span>
+                        <span className="grade-pts">{r.grade.points} pts</span>
+                      </div>
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "13px", fontWeight: 600, color: "#f4f4f5", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.title}</div>
+                        <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.25)", fontFamily: "monospace", marginTop: "2px" }}>{r.code}</div>
+                      </div>
+
+                      <div className="slider-col">
+                        <div className="slider-lbl">Internal</div>
+                        <input type="range" min={0} max={50} value={r.intMark} className="int-range"
+                          onChange={e => setInternals(p => ({ ...p, [r.code]: parseInt(e.target.value) }))} />
+                        <div className="slider-val" style={{ color: "#f5a623" }}>{r.intMark}</div>
+                      </div>
+
+                      <div className="slider-col">
+                        <div className="slider-lbl">External</div>
+                        <input type="range" min={0} max={50} value={r.extMark} className="ext-range"
+                          onChange={e => setExternals(p => ({ ...p, [r.code]: parseInt(e.target.value) }))} />
+                        <div className="slider-val" style={{ color: "#63cda0" }}>{r.extMark}</div>
+                      </div>
+
+                      <div style={{ textAlign: "right", width: "48px", flexShrink: 0 }}>
+                        <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.25)", marginBottom: "3px" }}>Total</div>
+                        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "22px", fontWeight: 700, color: r.grade.color }}>{r.total}</div>
+                      </div>
                     </div>
                   ))}
                 </div>
-              </div>
-
-              <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "14px", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                Adjust marks to simulate your GPA
-              </div>
-
-              {/* Subject rows */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {rows.map((r, i) => (
-                  <div key={r.code} style={{ borderRadius: "14px", padding: "16px 20px", background: "rgba(13,13,20,0.8)", border: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: "16px", animation: `cardIn 0.35s ${i * 0.04}s both` }}>
-                    {/* Grade badge */}
-                    <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: `${getGradeColor(r.grade.grade)}15`, border: `1px solid ${getGradeColor(r.grade.grade)}30`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <span style={{ fontSize: "14px", fontWeight: 800, color: getGradeColor(r.grade.grade) }}>{r.grade.grade}</span>
-                      <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)" }}>{r.grade.points}</span>
-                    </div>
-
-                    {/* Title */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: "13px", fontWeight: 500, color: "#f1f5f9", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.title}</div>
-                      <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.25)", fontFamily: "monospace", marginTop: "2px" }}>{r.code}</div>
-                    </div>
-
-                    {/* Internal slider */}
-                    <div style={{ textAlign: "center", width: "100px" }}>
-                      <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", marginBottom: "4px" }}>Internal</div>
-                      <input type="range" min={0} max={50} value={r.intMark}
-                        onChange={e => setInternals(p => ({ ...p, [r.code]: parseInt(e.target.value) }))}
-                        style={{ width: "100%", accentColor: "#6c63ff" }} />
-                      <div style={{ fontSize: "13px", fontWeight: 700, color: "#6c63ff" }}>{r.intMark}</div>
-                    </div>
-
-                    {/* External slider */}
-                    <div style={{ textAlign: "center", width: "100px" }}>
-                      <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", marginBottom: "4px" }}>External</div>
-                      <input type="range" min={0} max={50} value={r.extMark}
-                        onChange={e => setExternals(p => ({ ...p, [r.code]: parseInt(e.target.value) }))}
-                        style={{ width: "100%", accentColor: "#22c55e" }} />
-                      <div style={{ fontSize: "13px", fontWeight: 700, color: "#22c55e" }}>{r.extMark}</div>
-                    </div>
-
-                    {/* Total */}
-                    <div style={{ textAlign: "right", width: "48px", flexShrink: 0 }}>
-                      <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", marginBottom: "2px" }}>Total</div>
-                      <div style={{ fontSize: "18px", fontWeight: 800, color: getGradeColor(r.grade.grade) }}>{r.total}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </main>
-      <style>{`@keyframes cardIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }`}</style>
-    </div>
+              </>
+            )}
+          </div>
+        </main>
+      </div>
+    </>
   );
-}
-
-function getGradeColor(grade: string) {
-  const map: Record<string, string> = { O: "#22c55e", "A+": "#10b981", A: "#60a5fa", "B+": "#a78bfa", B: "#f59e0b", C: "#ef4444" };
-  return map[grade] || "#a1a1aa";
 }
