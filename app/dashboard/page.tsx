@@ -5,31 +5,40 @@ import Sidebar from "@/components/Sidebar";
 import AttendanceCard from "@/components/AttendanceCard";
 import { dataAPI } from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
-import { Clock, BookCheck, AlertTriangle, FileText, TrendingUp } from "lucide-react";
 
-function StatCard({ title, value, subtitle, icon: Icon, color, delay = 0 }: any) {
+const SHARED_STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Manrope:wght@300;400;500;600;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  .srmx-blob { position: fixed; border-radius: 50%; filter: blur(90px); pointer-events: none; z-index: 0; }
+  .srmx-b1 { width: 500px; height: 500px; top: -150px; left: -150px; background: radial-gradient(circle, #7c3aed 0%, transparent 70%); opacity: 0.5; }
+  .srmx-b2 { width: 400px; height: 400px; bottom: -100px; right: -100px; background: radial-gradient(circle, #ec4899 0%, transparent 70%); opacity: 0.4; }
+  .srmx-b3 { width: 300px; height: 300px; top: 40%; left: 45%; background: radial-gradient(circle, #2563eb 0%, transparent 70%); opacity: 0.25; }
+  .srmx-grid { position: fixed; inset: 0; pointer-events: none; z-index: 0; background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px); background-size: 40px 40px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes srmx-fadeUp { to { opacity: 1; transform: translateY(0); } }
+`;
+
+function StatCard({ title, value, subtitle, icon, color, delay = 0 }: any) {
   const [visible, setVisible] = useState(false);
   useEffect(() => { const t = setTimeout(() => setVisible(true), delay); return () => clearTimeout(t); }, [delay]);
+
   const colors: any = {
-    purple: { bg: "rgba(108,99,255,0.15)", icon: "rgba(108,99,255,0.2)", text: "#8b84ff" },
-    green: { bg: "rgba(34,197,94,0.1)", icon: "rgba(34,197,94,0.15)", text: "#22c55e" },
-    amber: { bg: "rgba(245,158,11,0.1)", icon: "rgba(245,158,11,0.15)", text: "#f59e0b" },
-    red: { bg: "rgba(239,68,68,0.1)", icon: "rgba(239,68,68,0.15)", text: "#ef4444" },
-    cyan: { bg: "rgba(6,182,212,0.1)", icon: "rgba(6,182,212,0.15)", text: "#06b6d4" },
+    purple: { bg: "rgba(124,58,237,0.12)", top: "linear-gradient(90deg,#7c3aed,#a855f7)", text: "#a78bfa", icon: "rgba(124,58,237,0.2)" },
+    green:  { bg: "rgba(52,211,153,0.1)",  top: "linear-gradient(90deg,#059669,#34d399)", text: "#34d399", icon: "rgba(52,211,153,0.15)" },
+    red:    { bg: "rgba(248,113,113,0.1)",  top: "linear-gradient(90deg,#dc2626,#f87171)", text: "#f87171", icon: "rgba(248,113,113,0.15)" },
+    cyan:   { bg: "rgba(99,153,255,0.1)",   top: "linear-gradient(90deg,#2563eb,#60a5fa)", text: "#60a5fa", icon: "rgba(99,153,255,0.15)" },
   };
   const c = colors[color] || colors.purple;
+
   return (
-    <div style={{ borderRadius: "16px", padding: "20px", background: c.bg, border: "1px solid rgba(255,255,255,0.06)", transition: "all 0.5s ease", opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(16px)", position: "relative", overflow: "hidden" }}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-        <div>
-          <p style={{ fontSize: "12px", color: "#a1a1aa", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px" }}>{title}</p>
-          <p style={{ fontSize: "28px", fontWeight: "700", color: c.text, marginBottom: "4px" }}>{value}</p>
-          {subtitle && <p style={{ fontSize: "12px", color: "#a1a1aa" }}>{subtitle}</p>}
-        </div>
-        <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: c.icon, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <Icon size={20} color={c.text} />
-        </div>
+    <div style={{ borderRadius: "14px", padding: "18px", background: c.bg, border: "1px solid rgba(255,255,255,0.07)", position: "relative", overflow: "hidden", opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(16px)", transition: "all 0.5s ease", backdropFilter: "blur(10px)" }}>
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: c.top }} />
+      <div style={{ position: "absolute", top: 14, right: 14, width: "34px", height: "34px", borderRadius: "9px", background: c.icon, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {icon}
       </div>
+      <p style={{ fontFamily: "'Manrope',sans-serif", fontSize: "10px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: "8px" }}>{title}</p>
+      <p style={{ fontFamily: "'Syne',sans-serif", fontSize: "28px", fontWeight: "800", color: c.text, marginBottom: "4px" }}>{value}</p>
+      {subtitle && <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>{subtitle}</p>}
     </div>
   );
 }
@@ -46,71 +55,89 @@ export default function Dashboard() {
   }, []);
 
   const att = data?.attendance || [];
-  const avg = att.length ? (att.reduce((s: number, c: any) => s + parseFloat(c["Attn %"]||0), 0) / att.length).toFixed(1) : "—";
+  const avg = att.length ? (att.reduce((s: number, c: any) => s + parseFloat(c["Attn %"] || 0), 0) / att.length).toFixed(1) : "—";
   const risk = att.filter((c: any) => parseFloat(c["Attn %"]) < 75).length;
   const firstName = data?.profile?.["Name"]?.split(" ")[0] || "Student";
 
   if (loading) return (
-    <div style={{ display: "flex", height: "100vh", alignItems: "center", justifyContent: "center", background: "#0a0a0f" }}>
-      <div style={{ textAlign: "center" }}>
-        <div style={{ width: "40px", height: "40px", borderRadius: "50%", border: "3px solid rgba(108,99,255,0.3)", borderTopColor: "#6c63ff", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
-        <p style={{ color: "#a1a1aa", fontSize: "14px" }}>Loading your portal...</p>
+    <>
+      <style>{SHARED_STYLES}</style>
+      <div style={{ display: "flex", height: "100vh", alignItems: "center", justifyContent: "center", background: "#0f0c29" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ width: "40px", height: "40px", borderRadius: "50%", border: "3px solid rgba(124,58,237,0.3)", borderTopColor: "#7c3aed", animation: "spin 0.8s linear infinite", margin: "0 auto 14px" }} />
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px", fontFamily: "'Manrope',sans-serif" }}>Loading your portal...</p>
+        </div>
       </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
+    </>
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0f", position: "relative" }}>
-      {/* Animated background blobs */}
-      <div style={{ position: "fixed", inset: 0, zIndex: 0, overflow: "hidden", pointerEvents: "none" }}>
-        <div style={{ position: "absolute", top: 0, left: "-160px", width: "500px", height: "500px", borderRadius: "50%", background: "rgba(108,99,255,0.08)", filter: "blur(120px)", animation: "pulse 6s infinite" }} />
-        <div style={{ position: "absolute", bottom: 0, right: 0, width: "400px", height: "400px", borderRadius: "50%", background: "rgba(236,72,153,0.06)", filter: "blur(120px)", animation: "pulse 6s infinite 2s" }} />
-      </div>
-
-      <Sidebar />
-
-      <main style={{ paddingLeft: "272px", position: "relative", zIndex: 1 }}>
-        {/* Top bar */}
-        <div style={{ position: "sticky", top: 0, height: "64px", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px", background: "rgba(10,10,15,0.8)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.06)", zIndex: 10 }}>
-          <h2 style={{ fontWeight: "600", fontSize: "16px", color: "#f4f4f5" }}>Dashboard</h2>
-          <span style={{ fontSize: "13px", color: "#a1a1aa" }}>
-            Sem {data?.profile?.["Semester"]} · {data?.profile?.["Specialization"]}
-          </span>
-        </div>
-
-        <div style={{ padding: "32px" }}>
-          {/* Greeting */}
-          <div style={{ marginBottom: "32px" }}>
-            <h1 style={{ fontSize: "28px", fontWeight: "700", color: "#f4f4f5", marginBottom: "4px" }}>
-              Welcome back, <span style={{ color: "#8b84ff" }}>{firstName}</span> 👋
-            </h1>
-            <p style={{ color: "#a1a1aa", fontSize: "14px" }}>Here's what's happening with your academics today.</p>
-          </div>
-
-          {/* Stats */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "32px" }}>
-            <StatCard title="Overall Attendance" value={avg + "%"} subtitle="This semester" icon={Clock} color={parseFloat(avg) >= 75 ? "green" : "red"} delay={0} />
-            <StatCard title="Total Courses" value={att.length} subtitle={att.filter((c:any)=>c["Category"]==="Theory").length + " Theory · " + att.filter((c:any)=>c["Category"]==="Practical").length + " Lab"} icon={BookCheck} color="purple" delay={100} />
-            <StatCard title="Subjects at Risk" value={risk} subtitle={risk > 0 ? "Need attention" : "All safe!"} icon={AlertTriangle} color={risk > 0 ? "red" : "green"} delay={200} />
-            <StatCard title="Mark Entries" value={data?.marks?.length || 0} subtitle="Recorded tests" icon={FileText} color="cyan" delay={300} />
-          </div>
-
-          {/* Attendance grid */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-            <h2 style={{ fontSize: "16px", fontWeight: "600", color: "#f4f4f5" }}>Subject-wise Attendance</h2>
-            <span style={{ fontSize: "13px", color: "#a1a1aa" }}>{att.length} subjects</span>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "14px" }}>
-            {att.map((c: any) => <AttendanceCard key={c["Course Code"]+c["Category"]} course={c} />)}
-          </div>
-        </div>
-      </main>
-
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes pulse { 0%,100%{opacity:0.6} 50%{opacity:1} }
+    <>
+      <style>{SHARED_STYLES + `
+        .dash-root { min-height: 100vh; background: #0f0c29; font-family: 'Manrope', sans-serif; }
+        .dash-main { margin-left: 256px; position: relative; z-index: 1; }
+        .dash-topbar { position: sticky; top: 0; height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; background: rgba(15,12,41,0.8); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.07); z-index: 50; }
+        .dash-topbar h2 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: #fff; }
+        .dash-topbar-sub { font-size: 12px; color: rgba(255,255,255,0.3); }
+        .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 28px; }
+        .att-grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; }
+        .sec-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .sec-heading h3 { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: #fff; }
+        .sec-heading span { font-size: 11px; color: rgba(255,255,255,0.3); }
+        @media (max-width: 900px) { .stat-grid { grid-template-columns: repeat(2,1fr); } }
       `}</style>
-    </div>
+
+      <div className="dash-root">
+        <div className="srmx-blob srmx-b1" />
+        <div className="srmx-blob srmx-b2" />
+        <div className="srmx-blob srmx-b3" />
+        <div className="srmx-grid" />
+
+        <Sidebar />
+
+        <main className="dash-main">
+          <div className="dash-topbar">
+            <h2>Dashboard</h2>
+            <span className="dash-topbar-sub">
+              Sem {data?.profile?.["Semester"]} · {data?.profile?.["Specialization"]}
+            </span>
+          </div>
+
+          <div style={{ padding: "28px 28px 60px" }}>
+            {/* Greeting */}
+            <div style={{ marginBottom: "28px", opacity: 0, transform: "translateY(14px)", animation: "srmx-fadeUp 0.5s ease forwards 0.1s" }}>
+              <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: "26px", fontWeight: 800, color: "#fff", marginBottom: "6px" }}>
+                Welcome back,{" "}
+                <span style={{ background: "linear-gradient(90deg,#a78bfa,#f472b6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                  {firstName}
+                </span>{" "}👋
+              </h1>
+              <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)" }}>Here's your academic snapshot for today.</p>
+            </div>
+
+            {/* Stats */}
+            <div className="stat-grid">
+              <StatCard title="Avg Attendance" value={avg + "%"} subtitle="This semester" color={parseFloat(avg) >= 75 ? "green" : "red"} delay={0}
+                icon={<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5"/><path d="M8 4.5V8l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>} />
+              <StatCard title="Total Courses" value={att.length} subtitle={att.filter((c:any)=>c["Category"]==="Theory").length+" Theory · "+att.filter((c:any)=>c["Category"]==="Practical").length+" Lab"} color="purple" delay={80}
+                icon={<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="1.5" width="12" height="13" rx="2" stroke="currentColor" strokeWidth="1.4"/><path d="M5 6h6M5 9h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>} />
+              <StatCard title="At Risk" value={risk} subtitle={risk > 0 ? "Need attention" : "All safe!"} color={risk > 0 ? "red" : "green"} delay={160}
+                icon={<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v5M8 10.5v1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><path d="M8 1l7 13H1L8 1z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/></svg>} />
+              <StatCard title="Mark Entries" value={data?.marks?.length || 0} subtitle="Recorded tests" color="cyan" delay={240}
+                icon={<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="1.5" width="12" height="13" rx="2" stroke="currentColor" strokeWidth="1.4"/><path d="M5 5h6M5 8h6M5 11h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>} />
+            </div>
+
+            {/* Attendance */}
+            <div className="sec-heading">
+              <h3>Subject-wise Attendance</h3>
+              <span>{att.length} subjects</span>
+            </div>
+            <div className="att-grid-2">
+              {att.map((c: any) => <AttendanceCard key={c["Course Code"] + c["Category"]} course={c} />)}
+            </div>
+          </div>
+        </main>
+      </div>
+    </>
   );
 }

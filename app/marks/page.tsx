@@ -4,192 +4,17 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { dataAPI } from "@/lib/api";
 
-export default function MarksPage() {
-  const [marks, setMarks] = useState<any[]>([]);
-  const [attendance, setAttendance] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<number | null>(null);
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!localStorage.getItem("srmx_token")) return router.push("/");
-    Promise.all([dataAPI.getMarks(), dataAPI.getAttendance()])
-      .then(([m, a]) => {
-        setMarks(m.data || []);
-        setAttendance(a.data || []);
-        setLoading(false);
-      })
-      .catch(() => router.push("/"));
-  }, []);
-
-  const titleMap: Record<string, string> = {};
-  attendance.forEach((c: any) => { titleMap[c["Course Code"]] = c["Course Title"]; });
-
-  const totalScored = marks.reduce((s, m) =>
-    s + (m.tests?.reduce((a: number, t: any) => a + (t.score === "Abs" ? 0 : parseFloat(t.score) || 0), 0) || 0), 0);
-  const totalMax = marks.reduce((s, m) =>
-    s + (m.tests?.reduce((a: number, t: any) => { const [, mx] = t.test.split("/"); return a + (parseFloat(mx) || 0); }, 0) || 0), 0);
-  const overallPct = totalMax > 0 ? (totalScored / totalMax) * 100 : 0;
-
-  return (
-    <div style={{ minHeight: "100vh", background: "#07070e", color: "#f4f4f5", fontFamily: "'Inter', system-ui, sans-serif" }}>
-      {/* Ambient */}
-      <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
-        <div style={{ position: "absolute", top: "-10%", right: "-5%", width: "600px", height: "600px", borderRadius: "50%", background: "radial-gradient(circle, rgba(236,72,153,0.06) 0%, transparent 70%)" }} />
-        <div style={{ position: "absolute", bottom: "0", left: "10%", width: "500px", height: "500px", borderRadius: "50%", background: "radial-gradient(circle, rgba(108,99,255,0.05) 0%, transparent 70%)" }} />
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(255,255,255,0.011) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.011) 1px,transparent 1px)", backgroundSize: "56px 56px" }} />
-      </div>
-
-      <Sidebar />
-      <main style={{ paddingLeft: "272px", position: "relative", zIndex: 1 }}>
-
-        {/* Header */}
-        <header style={{ position: "sticky", top: 0, height: "60px", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px", background: "rgba(7,7,14,0.9)", backdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.055)", zIndex: 10 }}>
-          <h1 style={{ fontWeight: 700, fontSize: "15px", color: "#f4f4f5", letterSpacing: "-0.01em" }}>Internal Marks</h1>
-          {!loading && totalMax > 0 && (
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)" }}>Overall</span>
-              <span style={{ fontSize: "14px", fontWeight: 800, color: overallPct >= 60 ? "#22c55e" : overallPct >= 40 ? "#f59e0b" : "#ef4444" }}>
-                {totalScored.toFixed(1)} / {totalMax.toFixed(0)}
-              </span>
-              <div style={{ width: "80px", height: "4px", background: "rgba(255,255,255,0.07)", borderRadius: "99px", overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${Math.min(overallPct, 100)}%`, background: overallPct >= 60 ? "#22c55e" : overallPct >= 40 ? "#f59e0b" : "#ef4444", borderRadius: "99px" }} />
-              </div>
-            </div>
-          )}
-        </header>
-
-        <div style={{ padding: "28px 32px 80px" }}>
-          {loading ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))", gap: "14px" }}>
-              {[...Array(6)].map((_, i) => (
-                <div key={i} style={{ height: "200px", borderRadius: "18px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)", animation: `shimmer 1.8s ${i * 0.1}s infinite linear`, backgroundSize: "600px 100%" }} />
-              ))}
-            </div>
-          ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))", gap: "14px" }}>
-              {marks.map((m: any, i: number) => {
-                const title = titleMap[m.courseCode] || m.courseCode;
-                const scored = m.tests?.reduce((s: number, t: any) => s + (t.score === "Abs" ? 0 : parseFloat(t.score) || 0), 0) || 0;
-                const maxTotal = m.tests?.reduce((s: number, t: any) => { const [, mx] = t.test.split("/"); return s + (parseFloat(mx) || 0); }, 0) || 0;
-                const totalPct = maxTotal > 0 ? (scored / maxTotal) * 100 : 0;
-                const totalColor = totalPct >= 60 ? "#22c55e" : totalPct >= 40 ? "#f59e0b" : "#ef4444";
-                const isOpen = selected === i;
-                const isTheory = m.courseType === "Theory";
-
-                return (
-                  <div key={i}
-                    onClick={() => setSelected(isOpen ? null : i)}
-                    style={{
-                      borderRadius: "18px", overflow: "hidden", cursor: "pointer",
-                      background: isOpen ? "rgba(20,20,32,0.95)" : "rgba(13,13,20,0.8)",
-                      border: isOpen ? "1px solid rgba(108,99,255,0.35)" : "1px solid rgba(255,255,255,0.06)",
-                      backdropFilter: "blur(20px)",
-                      boxShadow: isOpen ? "0 8px 32px rgba(108,99,255,0.15)" : "none",
-                      transition: "all 0.22s cubic-bezier(.22,1,.36,1)",
-                      animation: `cardIn 0.4s ${i * 0.05}s both cubic-bezier(.22,1,.36,1)`,
-                    }}
-                    onMouseEnter={e => { if (!isOpen) (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(255,255,255,0.12)"; }}
-                    onMouseLeave={e => { if (!isOpen) (e.currentTarget as HTMLDivElement).style.border = "1px solid rgba(255,255,255,0.06)"; }}
-                  >
-                    {/* Top color bar */}
-                    <div style={{ height: "3px", background: `linear-gradient(90deg, ${totalColor}, ${totalColor}44)` }} />
-
-                    <div style={{ padding: "18px 20px" }}>
-                      {/* Header row */}
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px" }}>
-                        <div style={{ flex: 1, minWidth: 0, marginRight: "12px" }}>
-                          <div style={{ fontSize: "13px", fontWeight: 600, color: "#f1f5f9", lineHeight: 1.4, marginBottom: "4px" }}>{title}</div>
-                          <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                            <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.25)", fontFamily: "monospace" }}>{m.courseCode}</span>
-                            <span style={{ width: "3px", height: "3px", borderRadius: "50%", background: "rgba(255,255,255,0.15)" }} />
-                            <span style={{ fontSize: "10px", padding: "1px 7px", borderRadius: "999px", background: isTheory ? "rgba(96,165,250,0.12)" : "rgba(167,139,250,0.12)", color: isTheory ? "#60a5fa" : "#a78bfa", border: `1px solid ${isTheory ? "rgba(96,165,250,0.25)" : "rgba(167,139,250,0.25)"}` }}>
-                              {m.courseType}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Score ring */}
-                        {maxTotal > 0 && (
-                          <ScoreRing score={scored} max={maxTotal} color={totalColor} />
-                        )}
-                      </div>
-
-                      {/* Mini progress bars preview (always visible) */}
-                      <div style={{ display: "flex", gap: "3px", marginBottom: isOpen ? "14px" : "0" }}>
-                        {m.tests?.map((t: any, j: number) => {
-                          const [, mx] = t.test.split("/");
-                          const sc = t.score === "Abs" ? 0 : parseFloat(t.score) || 0;
-                          const p = parseFloat(mx) > 0 ? (sc / parseFloat(mx)) * 100 : 0;
-                          const c = t.score === "Abs" ? "#ef4444" : p >= 60 ? "#22c55e" : p >= 40 ? "#f59e0b" : "#ef4444";
-                          return (
-                            <div key={j} style={{ flex: 1, height: "4px", borderRadius: "99px", background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
-                              <div style={{ height: "100%", width: `${Math.min(p, 100)}%`, background: c, borderRadius: "99px" }} />
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Expanded detail */}
-                      {isOpen && m.tests?.length > 0 && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "10px", animation: "fadeUp 0.25s ease" }}>
-                          {m.tests.map((t: any, j: number) => {
-                            const [name, maxStr] = t.test.split("/");
-                            const max = parseFloat(maxStr) || 100;
-                            const score = parseFloat(t.score) || 0;
-                            const pct = t.score === "Abs" ? 0 : (score / max) * 100;
-                            const isAbs = t.score === "Abs";
-                            const color = isAbs ? "#ef4444" : pct >= 60 ? "#22c55e" : pct >= 40 ? "#f59e0b" : "#ef4444";
-                            return (
-                              <div key={j}>
-                                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "5px" }}>
-                                  <span style={{ color: "rgba(255,255,255,0.5)" }}>{name} <span style={{ color: "rgba(255,255,255,0.2)" }}>/ {maxStr}</span></span>
-                                  <span style={{ color, fontWeight: 700 }}>{isAbs ? "Absent" : t.score}</span>
-                                </div>
-                                <div style={{ height: "5px", background: "rgba(255,255,255,0.06)", borderRadius: "999px" }}>
-                                  <div style={{ height: "100%", borderRadius: "999px", background: color, width: `${Math.min(pct, 100)}%`, transition: "width 0.8s ease", boxShadow: `0 0 8px ${color}50` }} />
-                                </div>
-                              </div>
-                            );
-                          })}
-                          {maxTotal > 0 && (
-                            <div style={{ marginTop: "4px", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "5px" }}>
-                                <span style={{ color: "rgba(255,255,255,0.45)", fontWeight: 500 }}>Total</span>
-                                <span style={{ color: totalColor, fontWeight: 800 }}>{scored.toFixed(1)} / {maxTotal.toFixed(0)}</span>
-                              </div>
-                              <div style={{ height: "6px", background: "rgba(255,255,255,0.06)", borderRadius: "999px" }}>
-                                <div style={{ height: "100%", borderRadius: "999px", background: `linear-gradient(90deg,${totalColor},${totalColor}88)`, width: `${Math.min(totalPct, 100)}%`, transition: "width 0.8s ease", boxShadow: `0 0 10px ${totalColor}40` }} />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {isOpen && (!m.tests || m.tests.length === 0) && (
-                        <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.25)", textAlign: "center", padding: "8px 0" }}>No marks recorded yet</div>
-                      )}
-
-                      {/* Expand hint */}
-                      {!isOpen && (
-                        <div style={{ marginTop: "10px", fontSize: "10px", color: "rgba(255,255,255,0.2)", textAlign: "center" }}>tap to expand</div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </main>
-      <style>{`
-        @keyframes cardIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes shimmer { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
-      `}</style>
-    </div>
-  );
-}
+const BASE = `
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Manrope:wght@400;500;600;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  .srmx-blob { position: fixed; border-radius: 50%; filter: blur(90px); pointer-events: none; z-index: 0; }
+  .srmx-b1 { width: 500px; height: 500px; top: -150px; left: -150px; background: radial-gradient(circle, #7c3aed 0%, transparent 70%); opacity: 0.45; }
+  .srmx-b2 { width: 400px; height: 400px; bottom: -100px; right: -100px; background: radial-gradient(circle, #ec4899 0%, transparent 70%); opacity: 0.35; }
+  .srmx-grid { position: fixed; inset: 0; pointer-events: none; z-index: 0; background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px); background-size: 40px 40px; }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeUp  { from { opacity: 0; transform: translateY(8px); }  to { opacity: 1; transform: translateY(0); } }
+  @keyframes spin    { to { transform: rotate(360deg); } }
+`;
 
 function ScoreRing({ score, max, color }: { score: number; max: number; color: string }) {
   const pct = Math.min((score / max) * 100, 100);
@@ -203,9 +28,178 @@ function ScoreRing({ score, max, color }: { score: number; max: number; color: s
           style={{ transition: "stroke-dasharray 0.9s cubic-bezier(.4,0,.2,1)", filter: `drop-shadow(0 0 4px ${color}80)` }} />
       </svg>
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-        <span style={{ fontSize: "11px", fontWeight: 800, color, lineHeight: 1 }}>{score.toFixed(0)}</span>
+        <span style={{ fontFamily: "'Syne',sans-serif", fontSize: "11px", fontWeight: 800, color, lineHeight: 1 }}>{score.toFixed(0)}</span>
         <span style={{ fontSize: "8px", color: "rgba(255,255,255,0.25)", lineHeight: 1 }}>/{max.toFixed(0)}</span>
       </div>
     </div>
+  );
+}
+
+export default function MarksPage() {
+  const [marks, setMarks] = useState<any[]>([]);
+  const [attendance, setAttendance] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<number | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!localStorage.getItem("srmx_token")) return router.push("/");
+    Promise.all([dataAPI.getMarks(), dataAPI.getAttendance()])
+      .then(([m, a]) => { setMarks(m.data || []); setAttendance(a.data || []); setLoading(false); })
+      .catch(() => router.push("/"));
+  }, []);
+
+  const titleMap: Record<string, string> = {};
+  attendance.forEach((c: any) => { titleMap[c["Course Code"]] = c["Course Title"]; });
+
+  const totalScored = marks.reduce((s, m) =>
+    s + (m.tests?.reduce((a: number, t: any) => a + (t.score === "Abs" ? 0 : parseFloat(t.score) || 0), 0) || 0), 0);
+  const totalMax = marks.reduce((s, m) =>
+    s + (m.tests?.reduce((a: number, t: any) => { const [, mx] = t.test.split("/"); return a + (parseFloat(mx) || 0); }, 0) || 0), 0);
+  const overallPct = totalMax > 0 ? (totalScored / totalMax) * 100 : 0;
+  const overallColor = overallPct >= 60 ? "#34d399" : overallPct >= 40 ? "#f59e0b" : "#f87171";
+
+  return (
+    <>
+      <style>{BASE + `
+        .marks-root { min-height: 100vh; background: #0f0c29; font-family: 'Manrope', sans-serif; }
+        .marks-main { margin-left: 256px; position: relative; z-index: 1; }
+        .marks-topbar { position: sticky; top: 0; height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; background: rgba(15,12,41,0.85); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.07); z-index: 50; }
+        .marks-topbar h1 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: #fff; }
+        .marks-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 12px; }
+        .mark-card { border-radius: 16px; overflow: hidden; cursor: pointer; background: rgba(13,13,32,0.8); border: 1px solid rgba(255,255,255,0.07); backdrop-filter: blur(12px); transition: all 0.22s cubic-bezier(.22,1,.36,1); }
+        .mark-card:hover { border-color: rgba(124,58,237,0.35); }
+        .mark-card.open { background: rgba(20,20,40,0.95); border-color: rgba(124,58,237,0.4); box-shadow: 0 8px 32px rgba(124,58,237,0.15); }
+        .sk-card { height: 200px; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); animation: shimmer 1.8s infinite linear; background-size: 600px 100%; }
+        @keyframes shimmer { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
+      `}</style>
+
+      <div className="marks-root">
+        <div className="srmx-blob srmx-b1" />
+        <div className="srmx-blob srmx-b2" />
+        <div className="srmx-grid" />
+        <Sidebar />
+
+        <main className="marks-main">
+          <div className="marks-topbar">
+            <h1>Internal Marks</h1>
+            {!loading && totalMax > 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>Overall</span>
+                <span style={{ fontFamily: "'Syne',sans-serif", fontSize: "14px", fontWeight: 800, color: overallColor }}>
+                  {totalScored.toFixed(1)} / {totalMax.toFixed(0)}
+                </span>
+                <div style={{ width: "80px", height: "4px", background: "rgba(255,255,255,0.07)", borderRadius: "99px", overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${Math.min(overallPct, 100)}%`, background: overallColor, borderRadius: "99px" }} />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div style={{ padding: "24px 28px 80px" }}>
+            {loading ? (
+              <div className="marks-grid">
+                {[...Array(6)].map((_, i) => <div key={i} className="sk-card" style={{ animationDelay: `${i * 0.1}s` }} />)}
+              </div>
+            ) : (
+              <div className="marks-grid">
+                {marks.map((m: any, i: number) => {
+                  const title = titleMap[m.courseCode] || m.courseCode;
+                  const scored = m.tests?.reduce((s: number, t: any) => s + (t.score === "Abs" ? 0 : parseFloat(t.score) || 0), 0) || 0;
+                  const maxTotal = m.tests?.reduce((s: number, t: any) => { const [, mx] = t.test.split("/"); return s + (parseFloat(mx) || 0); }, 0) || 0;
+                  const totalPct = maxTotal > 0 ? (scored / maxTotal) * 100 : 0;
+                  const totalColor = totalPct >= 60 ? "#34d399" : totalPct >= 40 ? "#f59e0b" : "#f87171";
+                  const isOpen = selected === i;
+                  const isTheory = m.courseType === "Theory";
+
+                  return (
+                    <div key={i}
+                      className={`mark-card${isOpen ? " open" : ""}`}
+                      onClick={() => setSelected(isOpen ? null : i)}
+                      style={{ animation: `cardIn 0.4s ${i * 0.05}s both` }}
+                    >
+                      {/* Color top bar */}
+                      <div style={{ height: "2px", background: `linear-gradient(90deg,${totalColor},${totalColor}44)` }} />
+
+                      <div style={{ padding: "16px 18px" }}>
+                        {/* Header */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
+                          <div style={{ flex: 1, minWidth: 0, marginRight: "10px" }}>
+                            <div style={{ fontFamily: "'Manrope',sans-serif", fontSize: "13px", fontWeight: 600, color: "#f1f5f9", lineHeight: 1.4, marginBottom: "4px" }}>{title}</div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.25)", fontFamily: "monospace" }}>{m.courseCode}</span>
+                              <span style={{ width: "3px", height: "3px", borderRadius: "50%", background: "rgba(255,255,255,0.15)" }} />
+                              <span style={{ fontSize: "10px", padding: "1px 7px", borderRadius: "999px", background: isTheory ? "rgba(96,165,250,0.12)" : "rgba(167,139,250,0.12)", color: isTheory ? "#60a5fa" : "#a78bfa", border: `1px solid ${isTheory ? "rgba(96,165,250,0.25)" : "rgba(167,139,250,0.25)"}`, fontWeight: 600 }}>
+                                {m.courseType}
+                              </span>
+                            </div>
+                          </div>
+                          {maxTotal > 0 && <ScoreRing score={scored} max={maxTotal} color={totalColor} />}
+                        </div>
+
+                        {/* Mini bars */}
+                        <div style={{ display: "flex", gap: "3px", marginBottom: isOpen ? "14px" : "8px" }}>
+                          {m.tests?.map((t: any, j: number) => {
+                            const [, mx] = t.test.split("/");
+                            const sc = t.score === "Abs" ? 0 : parseFloat(t.score) || 0;
+                            const p = parseFloat(mx) > 0 ? (sc / parseFloat(mx)) * 100 : 0;
+                            const c = t.score === "Abs" ? "#f87171" : p >= 60 ? "#34d399" : p >= 40 ? "#f59e0b" : "#f87171";
+                            return (
+                              <div key={j} style={{ flex: 1, height: "4px", borderRadius: "99px", background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+                                <div style={{ height: "100%", width: `${Math.min(p, 100)}%`, background: c, borderRadius: "99px" }} />
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Expanded */}
+                        {isOpen && m.tests?.length > 0 && (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "10px", animation: "fadeUp 0.25s ease" }}>
+                            {m.tests.map((t: any, j: number) => {
+                              const [name, maxStr] = t.test.split("/");
+                              const max = parseFloat(maxStr) || 100;
+                              const score = parseFloat(t.score) || 0;
+                              const pct = t.score === "Abs" ? 0 : (score / max) * 100;
+                              const isAbs = t.score === "Abs";
+                              const color = isAbs ? "#f87171" : pct >= 60 ? "#34d399" : pct >= 40 ? "#f59e0b" : "#f87171";
+                              return (
+                                <div key={j}>
+                                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "5px" }}>
+                                    <span style={{ color: "rgba(255,255,255,0.45)" }}>{name} <span style={{ color: "rgba(255,255,255,0.2)" }}>/ {maxStr}</span></span>
+                                    <span style={{ color, fontWeight: 700 }}>{isAbs ? "Absent" : t.score}</span>
+                                  </div>
+                                  <div style={{ height: "5px", background: "rgba(255,255,255,0.06)", borderRadius: "999px", overflow: "hidden" }}>
+                                    <div style={{ height: "100%", borderRadius: "999px", background: color, width: `${Math.min(pct, 100)}%`, transition: "width 0.8s ease" }} />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                            {maxTotal > 0 && (
+                              <div style={{ paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "5px" }}>
+                                  <span style={{ color: "rgba(255,255,255,0.45)", fontWeight: 500 }}>Total</span>
+                                  <span style={{ fontFamily: "'Syne',sans-serif", color: totalColor, fontWeight: 800 }}>{scored.toFixed(1)} / {maxTotal.toFixed(0)}</span>
+                                </div>
+                                <div style={{ height: "5px", background: "rgba(255,255,255,0.06)", borderRadius: "999px", overflow: "hidden" }}>
+                                  <div style={{ height: "100%", borderRadius: "999px", background: `linear-gradient(90deg,${totalColor},${totalColor}88)`, width: `${Math.min(totalPct, 100)}%`, transition: "width 0.8s ease" }} />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {!isOpen && (
+                          <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.2)", textAlign: "center", marginTop: "4px" }}>tap to expand</div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    </>
   );
 }
