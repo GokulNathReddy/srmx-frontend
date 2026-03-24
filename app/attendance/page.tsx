@@ -4,15 +4,17 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import AttendanceCard from "@/components/AttendanceCard";
 import { dataAPI } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function AttendancePage() {
   const [att, setAtt] = useState<any[]>([]);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { ready } = useAuth();
 
   useEffect(() => {
-    if (!localStorage.getItem("srmx_token")) return router.push("/");
+    if (!ready) return;
     dataAPI.getAttendance()
       .then(d => { setAtt(d.data || []); setLoading(false); })
       .catch(() => router.push("/"));

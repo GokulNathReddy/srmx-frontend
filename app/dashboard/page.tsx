@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import AttendanceCard from "@/components/AttendanceCard";
 import { dataAPI } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 import { useAuthStore } from "@/lib/store";
 import { Clock, BookCheck, AlertTriangle, FileText } from "lucide-react";
 
@@ -57,10 +58,11 @@ export default function Dashboard() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { ready } = useAuth();
   const { setProfile } = useAuthStore();
 
   useEffect(() => {
-    if (!localStorage.getItem("srmx_token")) return router.push("/");
+    if (!ready) return;
     dataAPI.getAll()
       .then(d => { setData(d); if (d.profile) setProfile(d.profile); setLoading(false); })
       .catch(() => router.push("/"));

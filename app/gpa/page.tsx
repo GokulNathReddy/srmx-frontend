@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { dataAPI } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 
 const GRADE_TABLE = [
   { min: 91, grade: "O",  points: 10, color: "#f5a623" },
@@ -24,9 +25,10 @@ export default function GPAPage() {
   const [internals, setInternals] = useState<Record<string, number>>({});
   const [externals, setExternals] = useState<Record<string, number>>({});
   const router = useRouter();
+  const { ready } = useAuth();
 
   useEffect(() => {
-    if (!localStorage.getItem("srmx_token")) return router.push("/");
+    if (!ready) return;
     Promise.all([dataAPI.getAttendance(), dataAPI.getMarks()])
       .then(([a, m]) => {
         setAttendance(a.data || []);
