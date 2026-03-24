@@ -50,12 +50,14 @@ function buildSchedule(rows: any[], letterMap: Record<string, Course>, labCourse
       else { if (inRun) { runs.push({ startTime: runStart, endTime: runEnd, slot: runSlot }); inRun = false; } }
     });
     if (inRun) runs.push({ startTime: runStart, endTime: runEnd, slot: runSlot });
-    runs.forEach((run, ri) => {
-      const course = labCourses[ri % Math.max(labCourses.length, 1)];
-      if (!course) return;
-      const isPrac = /practical|workshop/i.test(course["Category"] || "");
-      classes.push({ slot: run.slot, startTime: run.startTime, endTime: run.endTime, course, type: isPrac ? "practical" : "lab" });
-    });
+    runs.forEach((run) => {
+  const course = labCourses.find(c =>
+    (c["Slot"] || "").toUpperCase().includes(run.slot.toUpperCase())
+  );
+  if (!course) return;
+  const isPrac = /practical|workshop/i.test(course["Category"] || "");
+  classes.push({ slot: run.slot, startTime: run.startTime, endTime: run.endTime, course, type: isPrac ? "practical" : "lab" });
+});
     const seenKeys = new Set<string>();
     cells.forEach((cell, ci) => {
       const s = cell?.trim(); if (!s || s === "-") return;
@@ -215,6 +217,21 @@ export default function TimetablePage() {
   const [batch, setBatch] = useState(1);
   const [loading, setLoading] = useState(true);
   const [day, setDay] = useState(1);
+  useEffect(() => {
+  const today = new Date().getDay();
+
+  const map: Record<number, number> = {
+    1: 1,
+    2: 2,
+    3: 3,
+    4: 4,
+    5: 5,
+  };
+
+  if (map[today]) {
+    setDay(map[today]);
+  }
+}, []);
   const nowRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const weekend = [0, 6].includes(new Date().getDay());
