@@ -12,8 +12,64 @@ const BASE = `
   .srmx-b2 { width: 400px; height: 400px; bottom: -100px; right: -100px; background: radial-gradient(circle, #ec4899 0%, transparent 70%); opacity: 0.35; }
   .srmx-grid { position: fixed; inset: 0; pointer-events: none; z-index: 0; background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px); background-size: 40px 40px; }
   @keyframes cardIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes fadeUp  { from { opacity: 0; transform: translateY(8px); }  to { opacity: 1; transform: translateY(0); } }
-  @keyframes spin    { to { transform: rotate(360deg); } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); }  to { opacity: 1; transform: translateY(0); } }
+  @keyframes spin   { to { transform: rotate(360deg); } }
+  @keyframes shimmer { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
+
+  /* ── BASE LAYOUT ── */
+  .marks-root { min-height: 100vh; background: #0f0c29; font-family: 'Manrope', sans-serif; }
+  .marks-main { margin-left: 256px; position: relative; z-index: 1; }
+
+  .marks-topbar {
+    position: sticky; top: 0; height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px;
+    background: rgba(15,12,41,0.85); backdrop-filter: blur(24px);
+    border-bottom: 1px solid rgba(255,255,255,0.07); z-index: 50;
+  }
+  .marks-topbar h1 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: #fff; }
+  .marks-overall { display: flex; align-items: center; gap: 10px; }
+  .marks-overall-bar { width: 80px; height: 4px; background: rgba(255,255,255,0.07); border-radius: 99px; overflow: hidden; }
+
+  .marks-body { padding: 24px 28px 80px; }
+  .marks-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 12px; }
+
+  .mark-card {
+    border-radius: 16px; overflow: hidden; cursor: pointer;
+    background: rgba(13,13,32,0.8); border: 1px solid rgba(255,255,255,0.07);
+    backdrop-filter: blur(12px);
+    transition: all 0.22s cubic-bezier(.22,1,.36,1);
+  }
+  .mark-card:hover { border-color: rgba(124,58,237,0.35); }
+  .mark-card.open {
+    background: rgba(20,20,40,0.95);
+    border-color: rgba(124,58,237,0.4);
+    box-shadow: 0 8px 32px rgba(124,58,237,0.15);
+  }
+  .sk-card {
+    height: 200px; border-radius: 16px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+    animation: shimmer 1.8s infinite linear; background-size: 600px 100%;
+  }
+
+  /* ── MOBILE ── */
+  @media (max-width: 768px) {
+    .marks-main { margin-left: 0 !important; padding-bottom: 68px; }
+    .marks-body { padding: 16px 14px 80px; }
+    .marks-grid { grid-template-columns: 1fr; gap: 10px; }
+
+    .marks-topbar { padding: 0 16px; height: 56px; }
+    .marks-topbar h1 { font-size: 15px; }
+    .marks-overall-bar { width: 56px; }
+    /* Hide progress bar label on very small screens */
+    .marks-overall-label { display: none; }
+  }
+
+  @media (max-width: 380px) {
+    .marks-body { padding: 12px 10px 80px; }
+    .marks-overall { gap: 6px; }
+    .marks-overall-bar { display: none; }
+  }
 `;
 
 function ScoreRing({ score, max, color }: { score: number; max: number; color: string }) {
@@ -43,7 +99,9 @@ export default function MarksPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!localStorage.getItem("srmx_token")) return router.push("/");
+    if (typeof window !== "undefined" && !localStorage.getItem("srmx_token")) {
+      router.push("/"); return;
+    }
     Promise.all([dataAPI.getMarks(), dataAPI.getAttendance()])
       .then(([m, a]) => { setMarks(m.data || []); setAttendance(a.data || []); setLoading(false); })
       .catch(() => router.push("/"));
@@ -61,18 +119,7 @@ export default function MarksPage() {
 
   return (
     <>
-      <style>{BASE + `
-        .marks-root { min-height: 100vh; background: #0f0c29; font-family: 'Manrope', sans-serif; }
-        .marks-main { margin-left: 256px; position: relative; z-index: 1; }
-        .marks-topbar { position: sticky; top: 0; height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; background: rgba(15,12,41,0.85); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.07); z-index: 50; }
-        .marks-topbar h1 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: #fff; }
-        .marks-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 12px; }
-        .mark-card { border-radius: 16px; overflow: hidden; cursor: pointer; background: rgba(13,13,32,0.8); border: 1px solid rgba(255,255,255,0.07); backdrop-filter: blur(12px); transition: all 0.22s cubic-bezier(.22,1,.36,1); }
-        .mark-card:hover { border-color: rgba(124,58,237,0.35); }
-        .mark-card.open { background: rgba(20,20,40,0.95); border-color: rgba(124,58,237,0.4); box-shadow: 0 8px 32px rgba(124,58,237,0.15); }
-        .sk-card { height: 200px; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); animation: shimmer 1.8s infinite linear; background-size: 600px 100%; }
-        @keyframes shimmer { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
-      `}</style>
+      <style>{BASE}</style>
 
       <div className="marks-root">
         <div className="srmx-blob srmx-b1" />
@@ -81,22 +128,24 @@ export default function MarksPage() {
         <Sidebar />
 
         <main className="marks-main">
+          {/* Topbar */}
           <div className="marks-topbar">
             <h1>Internal Marks</h1>
             {!loading && totalMax > 0 && (
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>Overall</span>
+              <div className="marks-overall">
+                <span className="marks-overall-label" style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>Overall</span>
                 <span style={{ fontFamily: "'Syne',sans-serif", fontSize: "14px", fontWeight: 800, color: overallColor }}>
                   {totalScored.toFixed(1)} / {totalMax.toFixed(0)}
                 </span>
-                <div style={{ width: "80px", height: "4px", background: "rgba(255,255,255,0.07)", borderRadius: "99px", overflow: "hidden" }}>
+                <div className="marks-overall-bar">
                   <div style={{ height: "100%", width: `${Math.min(overallPct, 100)}%`, background: overallColor, borderRadius: "99px" }} />
                 </div>
               </div>
             )}
           </div>
 
-          <div style={{ padding: "24px 28px 80px" }}>
+          {/* Body */}
+          <div className="marks-body">
             {loading ? (
               <div className="marks-grid">
                 {[...Array(6)].map((_, i) => <div key={i} className="sk-card" style={{ animationDelay: `${i * 0.1}s` }} />)}
@@ -126,9 +175,9 @@ export default function MarksPage() {
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
                           <div style={{ flex: 1, minWidth: 0, marginRight: "10px" }}>
                             <div style={{ fontFamily: "'Manrope',sans-serif", fontSize: "13px", fontWeight: 600, color: "#f1f5f9", lineHeight: 1.4, marginBottom: "4px" }}>{title}</div>
-                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
                               <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.25)", fontFamily: "monospace" }}>{m.courseCode}</span>
-                              <span style={{ width: "3px", height: "3px", borderRadius: "50%", background: "rgba(255,255,255,0.15)" }} />
+                              <span style={{ width: "3px", height: "3px", borderRadius: "50%", background: "rgba(255,255,255,0.15)", flexShrink: 0 }} />
                               <span style={{ fontSize: "10px", padding: "1px 7px", borderRadius: "999px", background: isTheory ? "rgba(96,165,250,0.12)" : "rgba(167,139,250,0.12)", color: isTheory ? "#60a5fa" : "#a78bfa", border: `1px solid ${isTheory ? "rgba(96,165,250,0.25)" : "rgba(167,139,250,0.25)"}`, fontWeight: 600 }}>
                                 {m.courseType}
                               </span>
@@ -152,7 +201,7 @@ export default function MarksPage() {
                           })}
                         </div>
 
-                        {/* Expanded */}
+                        {/* Expanded detail */}
                         {isOpen && m.tests?.length > 0 && (
                           <div style={{ display: "flex", flexDirection: "column", gap: "10px", animation: "fadeUp 0.25s ease" }}>
                             {m.tests.map((t: any, j: number) => {

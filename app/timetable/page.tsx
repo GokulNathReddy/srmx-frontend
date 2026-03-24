@@ -15,7 +15,7 @@ interface ScheduleItem {
   course: Course; type: "theory" | "lab" | "practical";
 }
 
-// ─── SLOT BUILDER (unchanged logic) ──────────────────────────────────────────
+// ─── SLOT BUILDER (logic unchanged) ──────────────────────────────────────────
 function buildSlotMap(attendance: Course[]) {
   const letterMap: Record<string, Course> = {};
   const labCourses: Course[] = [];
@@ -81,7 +81,6 @@ function fmtH(t: string): string { const m = t.match(/(\d+):(\d+)/); return m ? 
 function fmtRange(s: string, e: string): string { const a = fmtH(s); const parts = e.split(/\s*[-–]\s*/); const b = fmtH(parts[parts.length - 1] || e); return a === b ? a : `${a} – ${b}`; }
 function slotMins(s: string, e: string): number { return Math.max(0, parseEndTime(e) - parseStart(s)); }
 
-// ─── CARD CONFIG ──────────────────────────────────────────────────────────────
 const TC = {
   theory:    { accent: "#60a5fa", bg: "rgba(96,165,250,0.1)",  label: "Theory",    icon: "T" },
   lab:       { accent: "#a78bfa", bg: "rgba(167,139,250,0.1)", label: "Lab",       icon: "L" },
@@ -96,7 +95,6 @@ function attnInfo(pct: number) {
   return           { color: "#f87171",  label: "Critical" };
 }
 
-// ─── RING ─────────────────────────────────────────────────────────────────────
 function Ring({ pct }: { pct: number }) {
   const r = 17, sz = 46, circ = 2 * Math.PI * r;
   const filled = (Math.min(pct, 100) / 100) * circ;
@@ -116,7 +114,6 @@ function Ring({ pct }: { pct: number }) {
   );
 }
 
-// ─── CLASS CARD ───────────────────────────────────────────────────────────────
 function ClassCard({ item, idx, active, cRef }: { item: ScheduleItem; idx: number; active: boolean; cRef?: React.RefObject<HTMLDivElement | null> }) {
   const cfg = TC[item.type] || TC.theory;
   const attn = parseFloat(item.course["Attn %"]) || 0;
@@ -142,23 +139,20 @@ function ClassCard({ item, idx, active, cRef }: { item: ScheduleItem; idx: numbe
         backdropFilter: "blur(16px)",
         animation: "cardIn 0.42s cubic-bezier(.22,1,.36,1) both",
         animationDelay: `${idx * 0.055}s`,
-        transition: "transform 0.2s ease, box-shadow 0.2s ease",
       }}
-      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = "translateY(-2px)"; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)"; }}
     >
-      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "3px", background: cfg.accent, borderRadius: "0 2px 2px 0" }} />
+      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "3px", background: cfg.accent }} />
       {active && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "1px", background: `linear-gradient(90deg,transparent,${cfg.accent}aa,transparent)` }} />}
 
       <div style={{ padding: "13px 14px 10px 18px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "9px" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "2px 9px", borderRadius: "999px", fontSize: "10px", fontWeight: 700, background: cfg.bg, color: cfg.accent, border: `1px solid ${cfg.accent}35`, fontFamily: "'Manrope',sans-serif" }}>
-            <span style={{ width: "14px", height: "14px", borderRadius: "50%", background: `${cfg.accent}20`, border: `1px solid ${cfg.accent}40`, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "8px", fontWeight: 800, fontFamily: "'Syne',sans-serif" }}>{cfg.icon}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "9px", flexWrap: "wrap" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "2px 9px", borderRadius: "999px", fontSize: "10px", fontWeight: 700, background: cfg.bg, color: cfg.accent, border: `1px solid ${cfg.accent}35` }}>
+            <span style={{ width: "14px", height: "14px", borderRadius: "50%", background: `${cfg.accent}20`, border: `1px solid ${cfg.accent}40`, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "8px", fontWeight: 800 }}>{cfg.icon}</span>
             {cfg.label}
           </span>
           <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.28)", fontFamily: "monospace", background: "rgba(255,255,255,0.04)", padding: "1px 7px", borderRadius: "5px", border: "1px solid rgba(255,255,255,0.07)" }}>{item.slot}</span>
           {active && (
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "2px 10px", borderRadius: "999px", background: "rgba(99,153,255,0.15)", border: "1px solid rgba(99,153,255,0.4)", fontSize: "10px", fontWeight: 700, color: "#60a5fa", marginLeft: "auto", fontFamily: "'Manrope',sans-serif" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "2px 10px", borderRadius: "999px", background: "rgba(99,153,255,0.15)", border: "1px solid rgba(99,153,255,0.4)", fontSize: "10px", fontWeight: 700, color: "#60a5fa", marginLeft: "auto" }}>
               <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#3b82f6", animation: "pulse 1.5s infinite" }} />
               NOW
             </span>
@@ -177,7 +171,7 @@ function ClassCard({ item, idx, active, cRef }: { item: ScheduleItem; idx: numbe
                   : <><rect x="1.5" y="1.5" width="9" height="9" rx="2" stroke="rgba(255,255,255,0.3)" strokeWidth="1.2"/><path d="M4 6h4M6 4v4" stroke="rgba(255,255,255,0.3)" strokeWidth="1.1" strokeLinecap="round"/></>
                 }
               </svg>
-              <span style={{ fontFamily: "'Manrope',sans-serif", fontSize: "11px", color: "rgba(255,255,255,0.42)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{text}</span>
+              <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.42)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{text}</span>
             </div>
           ))}
         </div>
@@ -187,22 +181,22 @@ function ClassCard({ item, idx, active, cRef }: { item: ScheduleItem; idx: numbe
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px 12px 18px" }}>
         <div>
-          <div style={{ fontFamily: "'Manrope',sans-serif", fontSize: "9px", color: "rgba(255,255,255,0.22)", letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: "2px" }}>Time</div>
+          <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.22)", letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: "2px" }}>Time</div>
           <div style={{ fontFamily: "monospace", fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.75)" }}>{fmtRange(item.startTime, item.endTime)}</div>
-          {multi && <div style={{ fontFamily: "'Manrope',sans-serif", fontSize: "9px", color: cfg.accent, marginTop: "2px" }}>{Math.round(mins / 55)} hr session</div>}
+          {multi && <div style={{ fontSize: "9px", color: cfg.accent, marginTop: "2px" }}>{Math.round(mins / 55)} hr session</div>}
         </div>
         {attn > 0 ? (
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div style={{ textAlign: "right" }}>
-              <div style={{ fontFamily: "'Manrope',sans-serif", fontSize: "9px", color: "rgba(255,255,255,0.22)", letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: "2px" }}>Attendance</div>
-              <div style={{ fontFamily: "'Manrope',sans-serif", fontSize: "11px", fontWeight: 700, color: ac }}>{al}</div>
+              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.22)", letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: "2px" }}>Attendance</div>
+              <div style={{ fontSize: "11px", fontWeight: 700, color: ac }}>{al}</div>
               <div style={{ fontSize: "10px", marginTop: "2px" }}>
-                {isRisk ? <span style={{ color: "#f87171", fontFamily: "'Manrope',sans-serif" }}>Need {need} more</span> : <span style={{ color: "#22c55e", fontFamily: "'Manrope',sans-serif" }}>{skip} can skip</span>}
+                {isRisk ? <span style={{ color: "#f87171" }}>Need {need} more</span> : <span style={{ color: "#22c55e" }}>{skip} can skip</span>}
               </div>
             </div>
             <Ring pct={attn} />
           </div>
-        ) : <span style={{ fontFamily: "'Manrope',sans-serif", fontSize: "10px", color: "rgba(255,255,255,0.2)" }}>No data</span>}
+        ) : <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.2)" }}>No data</span>}
       </div>
 
       {multi && (
@@ -226,7 +220,7 @@ export default function TimetablePage() {
   const weekend = [0, 6].includes(new Date().getDay());
 
   useEffect(() => {
-    if (!localStorage.getItem("srmx_token")) { router.push("/"); return; }
+    if (typeof window !== "undefined" && !localStorage.getItem("srmx_token")) { router.push("/"); return; }
     setLoading(true);
     Promise.all([dataAPI.getTimetable(batch), dataAPI.getAttendance()])
       .then(([tt, att]) => { setRows(tt.data || []); setAttendance(att.data || []); setLoading(false); })
@@ -252,30 +246,104 @@ export default function TimetablePage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@300;600;700;800&family=Manrope:wght@400;500;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         .srmx-blob { position: fixed; border-radius: 50%; filter: blur(90px); pointer-events: none; z-index: 0; }
         .srmx-b1 { width: 500px; height: 500px; top: -150px; left: -150px; background: radial-gradient(circle, #7c3aed 0%, transparent 70%); opacity: 0.45; }
         .srmx-b2 { width: 400px; height: 400px; bottom: -100px; right: -100px; background: radial-gradient(circle, #ec4899 0%, transparent 70%); opacity: 0.35; }
         .srmx-grid { position: fixed; inset: 0; pointer-events: none; z-index: 0; background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px); background-size: 40px 40px; }
+
         .tt-root { min-height: 100vh; background: #0f0c29; font-family: 'Manrope', sans-serif; }
         .tt-main { margin-left: 256px; position: relative; z-index: 1; min-height: 100vh; }
+
+        /* ── TOPBAR ── */
         .tt-topbar { position: sticky; top: 0; z-index: 20; height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; background: rgba(15,12,41,0.9); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.055); }
-        .batch-toggle { display: flex; padding: 3px; gap: 3px; background: rgba(255,255,255,0.04); border-radius: 11px; border: 1px solid rgba(255,255,255,0.07); }
-        .batch-btn { padding: 5px 20px; border-radius: 8px; font-size: 12px; font-weight: 600; background: transparent; color: rgba(255,255,255,0.38); border: none; cursor: pointer; font-family: 'Manrope', sans-serif; transition: all 0.18s; }
+        .tt-topbar-left { display: flex; align-items: center; gap: 14px; min-width: 0; overflow: hidden; }
+        .tt-topbar-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: #fff; white-space: nowrap; }
+        .tt-topbar-divider { width: 1px; height: 14px; background: rgba(255,255,255,0.1); flex-shrink: 0; }
+        .tt-topbar-sub { font-size: 12px; color: rgba(255,255,255,0.38); white-space: nowrap; }
+        .tt-inclass { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; border-radius: 999px; background: rgba(99,153,255,0.12); border: 1px solid rgba(99,153,255,0.3); font-size: 11px; color: #60a5fa; font-weight: 600; white-space: nowrap; }
+
+        /* ── BATCH TOGGLE ── */
+        .batch-toggle { display: flex; padding: 3px; gap: 3px; background: rgba(255,255,255,0.04); border-radius: 11px; border: 1px solid rgba(255,255,255,0.07); flex-shrink: 0; }
+        .batch-btn { padding: 5px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; background: transparent; color: rgba(255,255,255,0.38); border: none; cursor: pointer; font-family: 'Manrope', sans-serif; transition: all 0.18s; }
         .batch-btn.active { background: #7c3aed; color: #fff; }
-        .day-sel { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+
+        /* ── BODY ── */
+        .tt-body { padding: 24px 28px 80px; }
+
+        /* ── DAY SELECTOR ── */
+        .day-sel { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; gap: 12px; }
+        .day-sel-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .day-order-label { font-size: 11px; color: rgba(255,255,255,0.28); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600; white-space: nowrap; }
         .day-btns { display: flex; gap: 6px; }
         .day-btn { width: 46px; height: 46px; border-radius: 13px; font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.07); cursor: pointer; transition: all 0.2s cubic-bezier(.22,1,.36,1); display: flex; align-items: center; justify-content: center; }
         .day-btn.active { background: linear-gradient(135deg,#7c3aed,#a855f7); color: #fff; border-color: rgba(124,58,237,0.6); box-shadow: 0 6px 24px rgba(124,58,237,0.4); transform: scale(1.08); }
-        .nav-arrow { width: 36px; height: 36px; border-radius: 10px; font-size: 20px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); color: rgba(255,255,255,0.45); cursor: pointer; transition: all 0.15s; }
+        .nav-arrows { display: flex; gap: 5px; flex-shrink: 0; }
+        .nav-arrow { width: 36px; height: 36px; border-radius: 10px; font-size: 20px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); color: rgba(255,255,255,0.45); cursor: pointer; }
+
+        /* ── HEADING ── */
+        .tt-heading-row { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; gap: 12px; }
+        .tt-day-title { font-family: 'Syne', sans-serif; font-size: 38px; font-weight: 300; color: rgba(255,255,255,0.85); letter-spacing: -1px; line-height: 1; }
+        .tt-day-title strong { font-weight: 800; color: #fff; }
+        .tt-stats { display: flex; gap: 20px; align-items: flex-end; flex-shrink: 0; }
+        .tt-stat { text-align: right; }
+        .tt-stat-lbl { font-size: 9px; color: rgba(255,255,255,0.22); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 3px; }
+        .tt-stat-val { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; line-height: 1; }
+
+        /* ── LEGEND + CARDS ── */
+        .legend { display: flex; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: rgba(255,255,255,0.36); }
+        .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
         .tt-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px,1fr)); gap: 12px; }
         .sk-card { height: 210px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(90deg,rgba(255,255,255,0.03) 25%,rgba(255,255,255,0.06) 50%,rgba(255,255,255,0.03) 75%); animation: shimmer 1.8s infinite linear; background-size: 600px 100%; }
-        .legend { display: flex; gap: 16px; margin-bottom: 18px; }
-        .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: rgba(255,255,255,0.36); font-family: 'Manrope', sans-serif; }
-        .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+        /* ── ANIMATIONS ── */
         @keyframes cardIn  { from { opacity: 0; transform: translateY(16px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
         @keyframes shimmer { 0% { background-position: -600px 0; } 100% { background-position: 600px 0; } }
         @keyframes pulse   { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.5); } }
         @keyframes fadeUp  { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ════════════════════════════════════════
+           MOBILE OVERRIDES
+           ════════════════════════════════════════ */
+        @media (max-width: 768px) {
+          /* Remove sidebar offset */
+          .tt-main { margin-left: 0 !important; padding-bottom: 68px; }
+
+          /* Topbar: tighter, hide divider + sub on small */
+          .tt-topbar { padding: 0 14px; height: 54px; }
+          .tt-topbar-divider { display: none; }
+          .tt-topbar-sub { display: none; }
+          .tt-inclass { padding: 2px 8px; font-size: 10px; }
+          .batch-btn { padding: 5px 12px; font-size: 11px; }
+
+          /* Body padding */
+          .tt-body { padding: 16px 14px 80px; }
+
+          /* Day selector: stack if needed */
+          .day-sel { flex-wrap: wrap; margin-bottom: 18px; }
+          .day-order-label { display: none; }
+          .day-btn { width: 40px; height: 40px; border-radius: 11px; font-size: 16px; }
+          .day-btns { gap: 5px; }
+
+          /* Heading: shrink big "Day N" text */
+          .tt-heading-row { flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 14px; }
+          .tt-day-title { font-size: 26px; }
+          .tt-stats { gap: 14px; }
+          .tt-stat-val { font-size: 20px; }
+
+          /* Cards: single column */
+          .tt-cards { grid-template-columns: 1fr; gap: 10px; }
+          .sk-card { height: 170px; }
+        }
+
+        @media (max-width: 380px) {
+          .tt-topbar { padding: 0 10px; }
+          .tt-body { padding: 12px 10px 80px; }
+          .day-btn { width: 36px; height: 36px; font-size: 14px; border-radius: 9px; }
+          .day-btns { gap: 4px; }
+          .batch-btn { padding: 4px 10px; }
+        }
       `}</style>
 
       <div className="tt-root">
@@ -285,15 +353,14 @@ export default function TimetablePage() {
         <Sidebar />
 
         <main className="tt-main">
+          {/* ── Topbar ── */}
           <header className="tt-topbar">
-            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-              <span style={{ fontFamily: "'Syne',sans-serif", fontSize: "16px", fontWeight: 700, color: "#fff" }}>Timetable</span>
-              <div style={{ width: "1px", height: "14px", background: "rgba(255,255,255,0.1)" }} />
-              <span style={{ fontFamily: "'Manrope',sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.38)" }}>
-                {weekend ? "Holiday" : `Day Order ${day}`}
-              </span>
+            <div className="tt-topbar-left">
+              <span className="tt-topbar-title">Timetable</span>
+              <div className="tt-topbar-divider" />
+              <span className="tt-topbar-sub">{weekend ? "Holiday" : `Day Order ${day}`}</span>
               {nowItem && !weekend && (
-                <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "2px 10px", borderRadius: "999px", background: "rgba(99,153,255,0.12)", border: "1px solid rgba(99,153,255,0.3)", fontFamily: "'Manrope',sans-serif", fontSize: "11px", color: "#60a5fa", fontWeight: 600 }}>
+                <span className="tt-inclass">
                   <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#3b82f6", animation: "pulse 1.5s infinite" }} />
                   In class
                 </span>
@@ -308,59 +375,42 @@ export default function TimetablePage() {
             </div>
           </header>
 
-          <div style={{ padding: "24px 28px 80px" }}>
-            {/* Day selector */}
+          <div className="tt-body">
+            {/* ── Day selector ── */}
             <div className="day-sel">
-              <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                <span style={{ fontFamily: "'Manrope',sans-serif", fontSize: "11px", color: "rgba(255,255,255,0.28)", letterSpacing: "1.5px", textTransform: "uppercase", fontWeight: 600 }}>Day Order</span>
+              <div className="day-sel-left">
+                <span className="day-order-label">Day Order</span>
                 <div className="day-btns">
-                  {[1,2,3,4,5].map(d => (
+                  {[1, 2, 3, 4, 5].map(d => (
                     <button key={d} className={`day-btn${day === d ? " active" : ""}`} onClick={() => setDay(d)}>{d}</button>
                   ))}
                 </div>
               </div>
-              <div style={{ display: "flex", gap: "5px" }}>
+              <div className="nav-arrows">
                 {[{ ic: "‹", fn: () => setDay(d => d > 1 ? d - 1 : 5) }, { ic: "›", fn: () => setDay(d => d < 5 ? d + 1 : 1) }].map(({ ic, fn }) => (
                   <button key={ic} className="nav-arrow" onClick={fn}>{ic}</button>
                 ))}
               </div>
             </div>
 
-            {/* Title + stats */}
-            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "20px" }}>
+            {/* ── Title + stats ── */}
+            <div className="tt-heading-row">
               <div>
-                <div style={{ fontFamily: "'Manrope',sans-serif", fontSize: "10px", color: "rgba(255,255,255,0.22)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "6px" }}>
+                <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.22)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "6px" }}>
                   {weekend ? "Weekend — No classes" : "Schedule for"}
                 </div>
-                <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "38px", fontWeight: 300, color: "rgba(255,255,255,0.85)", letterSpacing: "-1px", lineHeight: 1 }}>
-                  Day <span style={{ fontWeight: 800, color: "#fff" }}>{day}</span>
-                </div>
+                <div className="tt-day-title">Day <strong>{day}</strong></div>
               </div>
               {!loading && classes.length > 0 && (
-                <div style={{ display: "flex", gap: "20px", alignItems: "flex-end" }}>
-                  {thryCnt > 0 && (
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontFamily: "'Manrope',sans-serif", fontSize: "9px", color: "rgba(255,255,255,0.22)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "3px" }}>Theory</div>
-                      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "26px", fontWeight: 800, color: "#60a5fa", lineHeight: 1 }}>{thryCnt}</div>
-                    </div>
-                  )}
-                  {labCnt > 0 && (
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontFamily: "'Manrope',sans-serif", fontSize: "9px", color: "rgba(255,255,255,0.22)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "3px" }}>Labs</div>
-                      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "26px", fontWeight: 800, color: "#a78bfa", lineHeight: 1 }}>{labCnt}</div>
-                    </div>
-                  )}
-                  {nxtItem && !nowItem && (
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontFamily: "'Manrope',sans-serif", fontSize: "9px", color: "rgba(255,255,255,0.22)", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "3px" }}>Next at</div>
-                      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "26px", fontWeight: 800, color: "#f472b6", lineHeight: 1 }}>{fmtH(nxtItem.startTime)}</div>
-                    </div>
-                  )}
+                <div className="tt-stats">
+                  {thryCnt > 0 && <div className="tt-stat"><div className="tt-stat-lbl">Theory</div><div className="tt-stat-val" style={{ color: "#60a5fa" }}>{thryCnt}</div></div>}
+                  {labCnt > 0  && <div className="tt-stat"><div className="tt-stat-lbl">Labs</div><div className="tt-stat-val" style={{ color: "#a78bfa" }}>{labCnt}</div></div>}
+                  {nxtItem && !nowItem && <div className="tt-stat"><div className="tt-stat-lbl">Next at</div><div className="tt-stat-val" style={{ color: "#f472b6" }}>{fmtH(nxtItem.startTime)}</div></div>}
                 </div>
               )}
             </div>
 
-            {/* Legend */}
+            {/* ── Legend ── */}
             {!loading && classes.length > 0 && (
               <div className="legend">
                 {(["theory", "lab", "practical"] as const).filter(tp => classes.some(c => c.type === tp)).map(tp => (
@@ -372,7 +422,7 @@ export default function TimetablePage() {
               </div>
             )}
 
-            {/* Cards */}
+            {/* ── Cards ── */}
             {loading ? (
               <div className="tt-cards">
                 {[...Array(4)].map((_, i) => <div key={i} className="sk-card" style={{ animationDelay: `${i * 0.12}s` }} />)}
@@ -381,7 +431,7 @@ export default function TimetablePage() {
               <div style={{ textAlign: "center", padding: "80px 0", animation: "fadeUp 0.5s ease" }}>
                 <div style={{ fontSize: "48px", marginBottom: "16px" }}>🎉</div>
                 <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "18px", fontWeight: 700, color: "rgba(255,255,255,0.6)", marginBottom: "8px" }}>No classes — Day {day}</div>
-                <div style={{ fontFamily: "'Manrope',sans-serif", fontSize: "13px", color: "rgba(255,255,255,0.28)" }}>Enjoy your free time!</div>
+                <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.28)" }}>Enjoy your free time!</div>
               </div>
             ) : (
               <div className="tt-cards">
