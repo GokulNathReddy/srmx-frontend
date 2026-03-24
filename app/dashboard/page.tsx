@@ -5,40 +5,50 @@ import Sidebar from "@/components/Sidebar";
 import AttendanceCard from "@/components/AttendanceCard";
 import { dataAPI } from "@/lib/api";
 import { useAuthStore } from "@/lib/store";
+import { Clock, BookCheck, AlertTriangle, FileText } from "lucide-react";
 
-const SHARED_STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Manrope:wght@300;400;500;600;700&display=swap');
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  .srmx-blob { position: fixed; border-radius: 50%; filter: blur(90px); pointer-events: none; z-index: 0; }
-  .srmx-b1 { width: 500px; height: 500px; top: -150px; left: -150px; background: radial-gradient(circle, #7c3aed 0%, transparent 70%); opacity: 0.5; }
-  .srmx-b2 { width: 400px; height: 400px; bottom: -100px; right: -100px; background: radial-gradient(circle, #ec4899 0%, transparent 70%); opacity: 0.4; }
-  .srmx-b3 { width: 300px; height: 300px; top: 40%; left: 45%; background: radial-gradient(circle, #2563eb 0%, transparent 70%); opacity: 0.25; }
-  .srmx-grid { position: fixed; inset: 0; pointer-events: none; z-index: 0; background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px); background-size: 40px 40px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes srmx-fadeUp { to { opacity: 1; transform: translateY(0); } }
-`;
-
-function StatCard({ title, value, subtitle, icon, color, delay = 0 }: any) {
+function StatCard({ title, value, subtitle, icon: Icon, variant, delay = 0 }: any) {
   const [visible, setVisible] = useState(false);
-  useEffect(() => { const t = setTimeout(() => setVisible(true), delay); return () => clearTimeout(t); }, [delay]);
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), delay);
+    return () => clearTimeout(t);
+  }, [delay]);
 
-  const colors: any = {
-    purple: { bg: "rgba(124,58,237,0.12)", top: "linear-gradient(90deg,#7c3aed,#a855f7)", text: "#a78bfa", icon: "rgba(124,58,237,0.2)" },
-    green:  { bg: "rgba(52,211,153,0.1)",  top: "linear-gradient(90deg,#059669,#34d399)", text: "#34d399", icon: "rgba(52,211,153,0.15)" },
-    red:    { bg: "rgba(248,113,113,0.1)",  top: "linear-gradient(90deg,#dc2626,#f87171)", text: "#f87171", icon: "rgba(248,113,113,0.15)" },
-    cyan:   { bg: "rgba(99,153,255,0.1)",   top: "linear-gradient(90deg,#2563eb,#60a5fa)", text: "#60a5fa", icon: "rgba(99,153,255,0.15)" },
+  const variants: any = {
+    gold:  { bg: "rgba(245,166,35,0.08)",  iconBg: "rgba(245,166,35,0.14)",  text: "#f5a623",  bar: "#f5a623"  },
+    green: { bg: "rgba(99,205,160,0.08)",  iconBg: "rgba(99,205,160,0.14)",  text: "#63cda0",  bar: "#63cda0"  },
+    red:   { bg: "rgba(248,113,113,0.08)", iconBg: "rgba(248,113,113,0.14)", text: "#f87171",  bar: "#f87171"  },
+    blue:  { bg: "rgba(99,153,255,0.08)",  iconBg: "rgba(99,153,255,0.14)",  text: "#6399ff",  bar: "#6399ff"  },
   };
-  const c = colors[color] || colors.purple;
+  const v = variants[variant] || variants.gold;
 
   return (
-    <div style={{ borderRadius: "14px", padding: "18px", background: c.bg, border: "1px solid rgba(255,255,255,0.07)", position: "relative", overflow: "hidden", opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(16px)", transition: "all 0.5s ease", backdropFilter: "blur(10px)" }}>
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: c.top }} />
-      <div style={{ position: "absolute", top: 14, right: 14, width: "34px", height: "34px", borderRadius: "9px", background: c.icon, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        {icon}
+    <div style={{
+      borderRadius: "18px",
+      padding: "22px 24px",
+      background: v.bg,
+      border: "1px solid rgba(255,255,255,0.06)",
+      transition: "opacity 0.5s ease, transform 0.5s ease, border-color 0.2s",
+      opacity: visible ? 1 : 0,
+      transform: visible ? "translateY(0)" : "translateY(18px)",
+      position: "relative",
+      overflow: "hidden",
+      cursor: "default",
+    }}
+    onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(245,166,35,0.18)")}
+    onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)")}
+    >
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "2px", background: `linear-gradient(90deg, ${v.bar}, transparent)`, borderRadius: "18px 18px 0 0" }} />
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontSize: "11px", fontWeight: "500", color: "rgba(255,255,255,0.3)", marginBottom: "10px", textTransform: "uppercase", letterSpacing: "2px", fontFamily: "'DM Sans', sans-serif" }}>{title}</p>
+          <p style={{ fontSize: "32px", fontWeight: "700", color: v.text, marginBottom: "6px", fontFamily: "'Playfair Display', serif", lineHeight: 1 }}>{value}</p>
+          {subtitle && <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.28)", fontFamily: "'DM Sans', sans-serif" }}>{subtitle}</p>}
+        </div>
+        <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: v.iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Icon size={20} color={v.text} />
+        </div>
       </div>
-      <p style={{ fontFamily: "'Manrope',sans-serif", fontSize: "10px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: "8px" }}>{title}</p>
-      <p style={{ fontFamily: "'Syne',sans-serif", fontSize: "28px", fontWeight: "800", color: c.text, marginBottom: "4px" }}>{value}</p>
-      {subtitle && <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>{subtitle}</p>}
     </div>
   );
 }
@@ -51,90 +61,265 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!localStorage.getItem("srmx_token")) return router.push("/");
-    dataAPI.getAll().then(d => { setData(d); if (d.profile) setProfile(d.profile); setLoading(false); }).catch(() => router.push("/"));
+    dataAPI.getAll()
+      .then(d => { setData(d); if (d.profile) setProfile(d.profile); setLoading(false); })
+      .catch(() => router.push("/"));
   }, []);
 
   const att = data?.attendance || [];
-  const avg = att.length ? (att.reduce((s: number, c: any) => s + parseFloat(c["Attn %"] || 0), 0) / att.length).toFixed(1) : "—";
+  const avg = att.length
+    ? (att.reduce((s: number, c: any) => s + parseFloat(c["Attn %"] || 0), 0) / att.length).toFixed(1)
+    : "—";
   const risk = att.filter((c: any) => parseFloat(c["Attn %"]) < 75).length;
+  const theoryCount = att.filter((c: any) => c["Category"] === "Theory").length;
+  const labCount = att.filter((c: any) => c["Category"] === "Practical").length;
   const firstName = data?.profile?.["Name"]?.split(" ")[0] || "Student";
 
   if (loading) return (
     <>
-      <style>{SHARED_STYLES}</style>
-      <div style={{ display: "flex", height: "100vh", alignItems: "center", justifyContent: "center", background: "#0f0c29" }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ width: "40px", height: "40px", borderRadius: "50%", border: "3px solid rgba(124,58,237,0.3)", borderTopColor: "#7c3aed", animation: "spin 0.8s linear infinite", margin: "0 auto 14px" }} />
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px", fontFamily: "'Manrope',sans-serif" }}>Loading your portal...</p>
-        </div>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
+      <div style={{ display: "flex", height: "100vh", alignItems: "center", justifyContent: "center", background: "#07070e", flexDirection: "column", gap: "18px", fontFamily: "'DM Sans', sans-serif" }}>
+        <div style={{ width: "42px", height: "42px", borderRadius: "50%", border: "2px solid rgba(245,166,35,0.2)", borderTopColor: "#f5a623", animation: "spin 0.8s linear infinite" }} />
+        <p style={{ color: "rgba(255,255,255,0.25)", fontSize: "14px", letterSpacing: "0.3px" }}>Loading your portal…</p>
       </div>
     </>
   );
 
   return (
     <>
-      <style>{SHARED_STYLES + `
-        .dash-root { min-height: 100vh; background: #0f0c29; font-family: 'Manrope', sans-serif; }
-        .dash-main { margin-left: 256px; position: relative; z-index: 1; }
-        .dash-topbar { position: sticky; top: 0; height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; background: rgba(15,12,41,0.8); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.07); z-index: 50; }
-        .dash-topbar h2 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: #fff; }
-        .dash-topbar-sub { font-size: 12px; color: rgba(255,255,255,0.3); }
-        .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 28px; }
-        .att-grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; }
-        .sec-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-        .sec-heading h3 { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: #fff; }
-        .sec-heading span { font-size: 11px; color: rgba(255,255,255,0.3); }
-        @media (max-width: 900px) { .stat-grid { grid-template-columns: repeat(2,1fr); } }
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+        .dash-root {
+          min-height: 100vh;
+          background: #07070e;
+          font-family: 'DM Sans', sans-serif;
+        }
+
+        .dash-orb-1 {
+          position: fixed; top: -120px; left: 100px;
+          width: 520px; height: 520px; border-radius: 50%;
+          background: radial-gradient(circle, rgba(245,166,35,0.06) 0%, transparent 70%);
+          pointer-events: none; z-index: 0;
+        }
+        .dash-orb-2 {
+          position: fixed; bottom: -150px; right: 0;
+          width: 420px; height: 420px; border-radius: 50%;
+          background: radial-gradient(circle, rgba(99,153,255,0.04) 0%, transparent 70%);
+          pointer-events: none; z-index: 0;
+        }
+
+        .dash-main {
+          padding-left: 272px;
+          position: relative;
+          z-index: 1;
+        }
+
+        /* ── TOPBAR ── */
+        .dash-topbar {
+          position: sticky; top: 0;
+          height: 68px;
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 0 36px;
+          background: rgba(7,7,14,0.88);
+          backdrop-filter: blur(24px);
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+          z-index: 10;
+        }
+
+        .dash-topbar-left {
+          display: flex; align-items: center; gap: 12px;
+        }
+
+        .dash-topbar-icon {
+          width: 34px; height: 34px; border-radius: 10px;
+          background: rgba(245,166,35,0.12);
+          display: flex; align-items: center; justify-content: center;
+        }
+
+        .dash-topbar-title {
+          font-family: 'Playfair Display', serif;
+          font-size: 18px; font-weight: 700;
+          color: #fff; letter-spacing: -0.3px;
+        }
+
+        .dash-topbar-meta {
+          font-size: 12px;
+          color: rgba(255,255,255,0.25);
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.07);
+          border-radius: 999px;
+          padding: 5px 14px;
+          letter-spacing: 0.3px;
+        }
+
+        /* ── CONTENT ── */
+        .dash-content {
+          padding: 36px;
+        }
+
+        /* ── GREETING ── */
+        .dash-greeting {
+          margin-bottom: 32px;
+          opacity: 0; transform: translateY(14px);
+          animation: fadeUp 0.6s ease forwards 0.1s;
+        }
+
+        .dash-greeting h1 {
+          font-family: 'Playfair Display', serif;
+          font-size: 32px; font-weight: 700;
+          color: #fff; letter-spacing: -0.5px;
+          margin-bottom: 6px; line-height: 1.2;
+        }
+
+        .dash-greeting h1 span { color: #f5a623; font-style: italic; }
+
+        .dash-greeting p {
+          font-size: 14px;
+          color: rgba(255,255,255,0.3);
+          line-height: 1.6;
+        }
+
+        /* ── STATS GRID ── */
+        .dash-stats {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 14px;
+          margin-bottom: 36px;
+        }
+
+        /* ── SECTION HEADER ── */
+        .dash-section-header {
+          display: flex; align-items: center; justify-content: space-between;
+          margin-bottom: 18px;
+          padding-bottom: 14px;
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .dash-section-title {
+          font-family: 'Playfair Display', serif;
+          font-size: 18px; font-weight: 700;
+          color: #fff; letter-spacing: -0.3px;
+        }
+
+        .dash-section-badge {
+          font-size: 11px; font-weight: 500;
+          color: rgba(255,255,255,0.3);
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.07);
+          border-radius: 999px;
+          padding: 4px 12px;
+          letter-spacing: 0.5px;
+        }
+
+        /* ── ATT GRID ── */
+        .dash-att-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 14px;
+        }
+
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin   { to { transform: rotate(360deg); } }
+
+        @media (max-width: 1200px) {
+          .dash-stats { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 900px) {
+          .dash-main { padding-left: 0; }
+          .dash-stats { grid-template-columns: 1fr; }
+          .dash-att-grid { grid-template-columns: 1fr; }
+          .dash-content { padding: 24px 20px; }
+          .dash-topbar  { padding: 0 20px; }
+        }
       `}</style>
 
       <div className="dash-root">
-        <div className="srmx-blob srmx-b1" />
-        <div className="srmx-blob srmx-b2" />
-        <div className="srmx-blob srmx-b3" />
-        <div className="srmx-grid" />
+        <div className="dash-orb-1" />
+        <div className="dash-orb-2" />
 
         <Sidebar />
 
         <main className="dash-main">
+
+          {/* ── TOPBAR ── */}
           <div className="dash-topbar">
-            <h2>Dashboard</h2>
-            <span className="dash-topbar-sub">
+            <div className="dash-topbar-left">
+              <div className="dash-topbar-icon">
+                <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+                  <rect x="2" y="2" width="6" height="6" rx="1.5" stroke="#f5a623" strokeWidth="1.5"/>
+                  <rect x="10" y="2" width="6" height="6" rx="1.5" stroke="#f5a623" strokeWidth="1.5"/>
+                  <rect x="2" y="10" width="6" height="6" rx="1.5" stroke="#f5a623" strokeWidth="1.5"/>
+                  <rect x="10" y="10" width="6" height="6" rx="1.5" stroke="#f5a623" strokeWidth="1.5"/>
+                </svg>
+              </div>
+              <span className="dash-topbar-title">Dashboard</span>
+            </div>
+            <span className="dash-topbar-meta">
               Sem {data?.profile?.["Semester"]} · {data?.profile?.["Specialization"]}
             </span>
           </div>
 
-          <div style={{ padding: "28px 28px 60px" }}>
+          {/* ── CONTENT ── */}
+          <div className="dash-content">
+
             {/* Greeting */}
-            <div style={{ marginBottom: "28px", opacity: 0, transform: "translateY(14px)", animation: "srmx-fadeUp 0.5s ease forwards 0.1s" }}>
-              <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: "26px", fontWeight: 800, color: "#fff", marginBottom: "6px" }}>
-                Welcome back,{" "}
-                <span style={{ background: "linear-gradient(90deg,#a78bfa,#f472b6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                  {firstName}
-                </span>{" "}👋
-              </h1>
-              <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)" }}>Here's your academic snapshot for today.</p>
+            <div className="dash-greeting">
+              <h1>Welcome back, <span>{firstName}</span></h1>
+              <p>Here's what's happening with your academics today.</p>
             </div>
 
             {/* Stats */}
-            <div className="stat-grid">
-              <StatCard title="Avg Attendance" value={avg + "%"} subtitle="This semester" color={parseFloat(avg) >= 75 ? "green" : "red"} delay={0}
-                icon={<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5"/><path d="M8 4.5V8l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>} />
-              <StatCard title="Total Courses" value={att.length} subtitle={att.filter((c:any)=>c["Category"]==="Theory").length+" Theory · "+att.filter((c:any)=>c["Category"]==="Practical").length+" Lab"} color="purple" delay={80}
-                icon={<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="1.5" width="12" height="13" rx="2" stroke="currentColor" strokeWidth="1.4"/><path d="M5 6h6M5 9h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>} />
-              <StatCard title="At Risk" value={risk} subtitle={risk > 0 ? "Need attention" : "All safe!"} color={risk > 0 ? "red" : "green"} delay={160}
-                icon={<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v5M8 10.5v1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><path d="M8 1l7 13H1L8 1z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/></svg>} />
-              <StatCard title="Mark Entries" value={data?.marks?.length || 0} subtitle="Recorded tests" color="cyan" delay={240}
-                icon={<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="1.5" width="12" height="13" rx="2" stroke="currentColor" strokeWidth="1.4"/><path d="M5 5h6M5 8h6M5 11h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>} />
+            <div className="dash-stats">
+              <StatCard
+                title="Overall Attendance"
+                value={avg + "%"}
+                subtitle="This semester"
+                icon={Clock}
+                variant={parseFloat(avg) >= 75 ? "green" : "red"}
+                delay={0}
+              />
+              <StatCard
+                title="Total Courses"
+                value={att.length}
+                subtitle={`${theoryCount} Theory · ${labCount} Lab`}
+                icon={BookCheck}
+                variant="gold"
+                delay={100}
+              />
+              <StatCard
+                title="Subjects at Risk"
+                value={risk}
+                subtitle={risk > 0 ? "Need attention" : "All safe!"}
+                icon={AlertTriangle}
+                variant={risk > 0 ? "red" : "green"}
+                delay={200}
+              />
+              <StatCard
+                title="Mark Entries"
+                value={data?.marks?.length || 0}
+                subtitle="Recorded tests"
+                icon={FileText}
+                variant="blue"
+                delay={300}
+              />
             </div>
 
-            {/* Attendance */}
-            <div className="sec-heading">
-              <h3>Subject-wise Attendance</h3>
-              <span>{att.length} subjects</span>
+            {/* Attendance Grid */}
+            <div className="dash-section-header">
+              <span className="dash-section-title">Subject-wise Attendance</span>
+              <span className="dash-section-badge">{att.length} subjects</span>
             </div>
-            <div className="att-grid-2">
-              {att.map((c: any) => <AttendanceCard key={c["Course Code"] + c["Category"]} course={c} />)}
+
+            <div className="dash-att-grid">
+              {att.map((c: any) => (
+                <AttendanceCard key={c["Course Code"] + c["Category"]} course={c} />
+              ))}
             </div>
+
           </div>
         </main>
       </div>
