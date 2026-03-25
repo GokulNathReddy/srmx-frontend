@@ -81,7 +81,7 @@ Every push can trigger automatic deployment.
 ## 👨‍💻 Author
 
 **Nithishkumar S**
-📧 [nithish687894@gmail.com](mailto:nithish687894@gmail.com)
+📧  [nithish687894@gmail.com](mailto:nithish687894@gmail.com)
 
 ---
 

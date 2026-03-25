@@ -7,6 +7,7 @@ const NAV = [
   { href: "/attendance", label: "Attendance",   icon: ChartIcon },
   { href: "/marks",      label: "Marks",        icon: StarIcon },
   { href: "/timetable",  label: "Timetable",    icon: CalIcon },
+  { href: "/calendar",   label: "Calendar",     icon: CalendarIcon },
   { href: "/gpa",        label: "GPA Calc",     icon: GpaIcon },
   { href: "/ai",         label: "AI Assistant", icon: BotIcon },
 ];
@@ -313,6 +314,9 @@ function StarIcon({ active }: { active: boolean }) {
 }
 function CalIcon({ active }: { active: boolean }) {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.8} strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>;
+}
+function CalendarIcon({ active }: { active: boolean }) {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.8} strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><circle cx="12" cy="16" r="1.5" fill="currentColor" stroke="none"/></svg>;
 }
 function GpaIcon({ active }: { active: boolean }) {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>;
