@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API = axios.create({ baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000" });
+const API = axios.create({ baseURL: process.env.NEXT_PUBLIC_API_URL || "https://srmx.onrender.com" });
 
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("srmx_token");
