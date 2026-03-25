@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API = axios.create({ baseURL: process.env.NEXT_PUBLIC_API_URL || "https://srmx.onrender.com" });
+const API = axios.create({ baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000" });
 
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("srmx_token");
@@ -15,8 +15,9 @@ export const authAPI = {
 };
 
 export const dataAPI = {
-  getAll: () => API.get("/api/all").then(r => r.data),
-  getAttendance: () => API.get("/api/attendance").then(r => r.data),
-  getMarks: () => API.get("/api/marks").then(r => r.data),
+  getAll:       () => API.get("/api/all").then(r => r.data),
+  getAttendance:() => API.get("/api/attendance").then(r => r.data),
+  getMarks:     () => API.get("/api/marks").then(r => r.data),
   getTimetable: (batch: number = 1) => API.get(`/api/timetable?batch=${batch}`).then(r => r.data),
+  getCalendar:  () => API.get("/api/calendar").then(r => r.data),  // ← NEW
 };
